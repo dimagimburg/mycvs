@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+
+# !!!!!  copy this file to usr/bin to get it executable in bash commands  !!!!!
+# sudo cp -f mycvs /usr/bin
+# commands:
+# mycvs init - 	creates a .mycvs directory in the local repository where we can store all the versions
+#				the command also checks if there is config directory which will be located in ~/lib/.mycvs
+#				if the directory exists it will add to the "repositories" file the path of the current repository
+#				where the init command run.
+
+#libs
+use File::Path qw(make_path);
+use Cwd;
+
+# ------------------------ PARAMETERS ----------------------------
+# first parameter
+$param = $ARGV[0];
+# environment user home path
+$home_dir = $ENV{"HOME"};
+# configuration dir hold the parameters and dir's where mycvs started
+$cfg_dir = $home_dir."/lib/.mycvs";
+# project home dir
+my $proj_dir =	getcwd();
+
+# ----------------------------------------------------------------
+
+# ------------------- mycvs init ---------------------------------
+
+# initialization
+if($param eq "init"){
+	init();	
+	print "Project working directory: ".$proj_dir."\n\n";
+	print "Created config directoy at path: ".$cfg_dir."\n\n";
+	print "mycvs initialization completed\n\n";
+}
+
+sub init(){
+	mkdir '.mycvs'; # create the directory for repository
+	make_path($home_dir."/lib/.mycvs"); # create cnfig dir
+	repositories_list();
+}
+
+sub repositories_list(){
+# this function will chec if the "repositories" files exists in the config ~/lib/.mycvs directory
+# if exists - check if the repository path is already exists in the file, if not append it
+	my $file_handler;
+	$repositories_file_name = "repositories";
+	if(-f $cfg_dir."/".$repositories_file_name){
+		print "repositories list file exists\n\n";
+		open $file_handler , '>>' ,$cfg_dir."/".$repositories_file_name;
+		print $file_handler $proj_dir."\n";		
+	} else {
+		open $file_handler , '>>' ,$cfg_dir."/".$repositories_file_name;
+		print $file_handler $proj_dir."\n";
+		print "created repositories list in: ".$cfg_dir."/".$repositories_file_name."\n\n";
+	}
+}
+
+sub repository_exists(){
+# check if repository exists in repositories list
+}
+
+#if($param eq "status"){
+#	if(){
+#		
+#	}
+#}
