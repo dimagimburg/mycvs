@@ -16,11 +16,17 @@ use RepoManagement::Configuration;
 
 # Create global dir tree
 sub init_global {
+    # Create global configuration dir that will hold all the db files and sessions
     check_and_create_dir($RepoManagement::Configuration::MYCVS_GLOBAL_BASEDIR);
+    # Create sessions directory that will hold user session files
+    check_and_create_dir($RepoManagement::Configuration::MYCVS_SESSIONS_DB);
     init_users_db();
+    init_grops_db();
     init_repos_db();
 }
 
+# Initialize .mycvs store in new directory.
+# This folder will store diffs/revisions
 sub init_local {
     my $dir = getcwd();
     check_and_create_dir($dir.'/.mycvs');

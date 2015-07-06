@@ -12,12 +12,14 @@ package UserManagement::Commands;
 use strict; use warnings;
 
 # Perl libs & vars
+use Digest::MD5 qw(md5_hex);
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 create_user create_user_record create_group create_group_record
                 get_user_groups add_user_to_group remove_user_from_group
-                remove_group change_pass get_pass_hash login logout get_session
+                remove_group change_pass get_pass_hash login_user
+                logout_user get_session
                 );
                 
 # Internal libs
@@ -72,26 +74,38 @@ sub change_pass {
     # Stores hash at the ent of the user's line in DB
 }
 
-# Get password hash for user password validation
+# Returns password hash for user.
 sub get_pass_hash {
-    
+    my ($user) = @_;
 }
 
 # Retuns hash of given password. probably will be MD5 hash
 sub generate_pass_hash {
     my ($pass) = @_;
+    if (defined($pass) && $pass ne "") {
+        return md5_hex($pass);
+    } else {
+        return;
+    }
 }
 
-# 
-sub login {
-    
+# Make user login to the system. Gets user and password.
+# Creates session file under $RepoManagement::Configuration::MYCVS_SESSIONS_DB
+# Session filename: username
+# Contents: pc_name:session_id
+# if file not exists. If file exists adds session line if new session.
+sub login_user {
+    my ($user_name, $pass) = @_;
 }
 
-sub logout {
-    
+# Removes entry in session file or if last session removes file.
+sub logout_user {
+    my ($user) = @_;
 }
 
+# Returns session id of the user specified if found from session file.
 sub get_session {
+    my ($user) = @_;
     
 }
 

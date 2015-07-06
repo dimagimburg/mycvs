@@ -14,5 +14,7 @@ our $MYCVS_USERS_DB = $MYCVS_GLOBAL_BASEDIR.qw(/users.db);
 our $MYCVS_GROUPS_DB = $MYCVS_GLOBAL_BASEDIR.qw(/groups.db);
 # Repository DB file location
 our $MYCVS_REPO_DB = $MYCVS_GLOBAL_BASEDIR.qw(/repo.db);
+# Sessions DB file location
+our $MYCVS_SESSIONS_DB = $MYCVS_GLOBAL_BASEDIR.qw(/session);
 
 1;
