@@ -15,9 +15,9 @@ use strict; use warnings;
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-                    create_user create_user_record create_group create_group_record
-                    get_user_groups add_user_to_group remove_user_from_group
-                    remove_group change_pass get_pass_hash
+                create_user create_user_record create_group create_group_record
+                get_user_groups add_user_to_group remove_user_from_group
+                remove_group change_pass get_pass_hash login logout get_session
                 );
                 
 # Internal libs
@@ -81,4 +81,18 @@ sub get_pass_hash {
 sub generate_pass_hash {
     my ($pass) = @_;
 }
+
+# 
+sub login {
+    
+}
+
+sub logout {
+    
+}
+
+sub get_session {
+    
+}
+
 1;

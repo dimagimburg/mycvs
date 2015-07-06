@@ -5,7 +5,10 @@ use strict; use warnings;
 # Perl libs & vars
 use Exporter qw(import);
 our @ISA = qw(Exporter);
-our @EXPORT = qw(checkin checkout diff);
+our @EXPORT = qw(
+                checkin checkout_revision diff_revision
+                diff_revision_print get_revisions print_revisions
+                );
 
 # Checks in file. If first checkin uses function checkin_first.
 # also creates $filename.rev_num.diff. File will include reverse diff of file
