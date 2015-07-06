@@ -1,13 +1,8 @@
 #!/bin/env perl
 #
-# users.db file structure:
-# username:password_hash
-# location: $RepoManagement::Configuration::MYCVS_USERS_DB
-#=============================
-# groups.db file structure
-# group_name:user1,user2
-# location: $RepoManagement::Configuration::MYCVS_GROUPS_DB
-#
+# Here will go all the Interactive commands of user submenu
+# as well as login and logout
+# make use of UserManagement::Impl
 package UserManagement::Commands;
 use strict; use warnings;
 
@@ -16,97 +11,61 @@ use Digest::MD5 qw(md5_hex);
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-                create_user create_user_record create_group create_group_record
-                get_user_groups add_user_to_group remove_user_from_group
-                remove_group change_pass get_pass_hash login_user
-                logout_user get_session
+                login_impl logout_impl add_user list_users
+                add_user_to_group rem_user_from_group list_user_groups
+                list_group_members list_groups group_add group_rem
                 );
                 
 # Internal libs
 use lib qw(../);
-use RepoManagement::Configuration;
+use UserManagement::Impl;
 
-# Creates user. Interactive function
-sub create_user {
-    # Function make use of create_user_record and add_user_to_group
+# Interactive login implementation.
+sub login_impl {
+    my ($user) = @_;
 }
 
-# Creates use record in DB
-sub create_user_record {
-    my ($user_name, $pass_hash) = @_;
+# Interactive logout implementation.
+# If !defined($user) logout current user. $ENV{USER}
+# else print that there no logged in users
+sub logout_impl {
+    my ($user) = @_;
+}
+# Interactive user add
+sub add_user {
+    my ($user) = @_;
+}
+# Simply prints global user list
+sub list_users {
     
 }
-
-# Creates group. Interactive function
-sub create_group {
-    # Function make use of create_group_record
-}
-
-# Creates group record in DB
-sub create_group_record {
-    my ($group_name) = @_;
-    
-}
-# Returns list of groups that user belongs to
-sub get_user_groups {
-    my ($user_name) = @_;
-    
-}
-
-# Adds user to group. If group not exists prints error
+# Interactively add user to group
 sub add_user_to_group {
-    my ($user_name, $group_name) = @_;
+    my ($user, $group) = @_;
 }
-
-# Removes user from group
-sub remove_user_from_group {
-    my ($user_name, $group_name) = @_;
+# Interactively removes user from group
+sub rem_user_from_group {
+    my ($user, $group) = @_;
 }
-
-# Removes group from DB.
-sub remove_group {
+# Simply prints groups that user belons to.
+sub list_user_groups {
+    my ($user) = @_;
+}
+# Simply prints group members.
+sub list_group_members {
     my ($group) = @_;
 }
-
-# Changes user password. If chnage_pass(new_user) create new hash.
-sub change_pass {
-    # Function uses generate_pass_hash function
-    # Stores hash at the ent of the user's line in DB
-}
-
-# Returns password hash for user.
-sub get_pass_hash {
-    my ($user) = @_;
-}
-
-# Retuns hash of given password. probably will be MD5 hash
-sub generate_pass_hash {
-    my ($pass) = @_;
-    if (defined($pass) && $pass ne "") {
-        return md5_hex($pass);
-    } else {
-        return;
-    }
-}
-
-# Make user login to the system. Gets user and password.
-# Creates session file under $RepoManagement::Configuration::MYCVS_SESSIONS_DB
-# Session filename: username
-# Contents: pc_name:session_id
-# if file not exists. If file exists adds session line if new session.
-sub login_user {
-    my ($user_name, $pass) = @_;
-}
-
-# Removes entry in session file or if last session removes file.
-sub logout_user {
-    my ($user) = @_;
-}
-
-# Returns session id of the user specified if found from session file.
-sub get_session {
-    my ($user) = @_;
+# Simply prints all existing groups.
+sub list_groups {
     
+}
+# Interactively adds group.
+sub group_add {
+    my ($group) = @_;
+}
+# Interactively removes group.
+sub group_rem {
+    my ($group) = @_;
 }
 
 1;
