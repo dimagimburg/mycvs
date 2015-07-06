@@ -84,8 +84,8 @@ sub logout {
 
 sub usage {
     print "\n\tUSAGE:\n";
-    print "\t$0 checkin <filename>                - add/checking file to repository.";
-    print "                                         (Inits repository with root in following dir if folder not belongs to any repository)\n";
+    print "\t$0 checkin <filename>                - add/checking file to repository.\n";
+    print "\t\t\t\t\t\t\t\t(Inits repository with root in following dir if folder not belongs to any repository)\n";
     print "\t$0 checkout <filename>               - checkout file from repository. (Overwrites existing file)\n";
     print "\t$0 checkout -r <revision> <filename> - checkout file from repository at specific revision. (Overwrites existing file)\n";
     print "\t$0 diff <filename>                   - displays diff of local file and latest repo revision.\n";
