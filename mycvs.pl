@@ -10,10 +10,10 @@ use Switch;
 my $rundir;
 BEGIN { use File::Basename; $rundir = dirname($0); }
 use lib "$rundir/lib";
-#use RepoManagement::Init;
-#use RepoManagement::Commands;
-#use VersionManagement::Commands;
-#use UserManagement::Commands; 
+use RepoManagement::Init;
+use RepoManagement::Commands;
+use VersionManagement::Commands;
+use UserManagement::Commands; 
 
 switch(shift(@ARGV)) {
     case 'diff' {
@@ -48,14 +48,14 @@ sub checkout {
 
 sub user {
     switch(shift) {
-        case 'add' {RepoManagement::Commands::add_user(shift);}
-        case 'rem' {RepoManagement::Commands::rem_user_from_group(shift);}
-        case 'list' {RepoManagement::Commands::list_users();}
+        case 'add' {UserManagement::Commands::add_user(shift);}
+        case 'rem' {UserManagement::Commands::rem_user_from_group(shift);}
+        case 'list' {UserManagement::Commands::list_users();}
         case 'group' {
             switch(shift) {
-                case 'add' {RepoManagement::Commands::add_user_to_group(shift, shift);}
-                case 'rem' {RepoManagement::Commands::rem_user_from_group(shift, shift);}
-                case 'list' {RepoManagement::Commands::list_user_groups(shift);}
+                case 'add' {UserManagement::Commands::add_user_to_group(shift, shift);}
+                case 'rem' {UserManagement::Commands::rem_user_from_group(shift, shift);}
+                case 'list' {UserManagement::Commands::list_user_groups(shift);}
                 else {usage();}
             }
         }
@@ -65,20 +65,20 @@ sub user {
 
 sub group {
     switch(shift) {
-        case 'add' {RepoManagement::Commands::group_add(shift);}
-        case 'rem' {RepoManagement::Commands::group_rem(shift);}
-        case 'list' {RepoManagement::Commands::list_groups();}
-        case 'members' {RepoManagement::Commands::list_group_members(shift);}
+        case 'add' {UserManagement::Commands::group_add(shift);}
+        case 'rem' {UserManagement::Commands::group_rem(shift);}
+        case 'list' {UserManagement::Commands::list_groups();}
+        case 'members' {UserManagement::Commands::list_group_members(shift);}
         else {usage();}
     }
 }
 
 sub login {
-    RepoManagement::Commands::login_impl(shift);
+    UserManagement::Commands::login_impl(shift);
 }
 
 sub logout {
-    RepoManagement::Commands::logout_impl(shift);
+    UserManagement::Commands::logout_impl(shift);
 }
 
 
