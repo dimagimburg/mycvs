@@ -4,7 +4,7 @@ use strict; use warnings;
 use Getopt::Long;
 use File::Basename;
 use feature qw(switch);
-
+no if ($] >= 5.018), 'warnings' => 'experimental'; # hide experimental comments
 
 # Internal libs
 my $rundir;
