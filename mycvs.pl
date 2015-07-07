@@ -3,7 +3,7 @@
 use strict; use warnings;
 use Getopt::Long;
 use File::Basename;
-use Switch;
+use feature qw(switch);
 
 
 # Internal libs
@@ -15,23 +15,23 @@ use RepoManagement::Commands;
 use VersionManagement::Commands;
 use UserManagement::Commands; 
 
-switch(shift(@ARGV)) {
-    case 'diff' {
+given(shift(@ARGV)) {
+    when ('diff') {
         my $revision;
         GetOptions('-r=i' => \$revision) or die usage();
         diff(shift(@ARGV), $revision);
     }
-    case 'checkin' { checkin(shift(@ARGV)); }
-    case 'checkout' {
+    when ('checkin') { checkin(shift(@ARGV)); }
+    when ('checkout') {
         my $revision;
         GetOptions('-r=i' => \$revision) or die usage();
         checkout(shift(@ARGV), $revision);
     }
-    case 'user' { user(shift(@ARGV),shift(@ARGV),shift(@ARGV),shift(@ARGV)); }
-    case 'group' { group(shift(@ARGV),shift(@ARGV)); }
-    case 'login' { login(shift(@ARGV)); }
-    case 'logout' { logout(shift(@ARGV)); }
-    else { usage(); }
+    when ('user') { user(shift(@ARGV),shift(@ARGV),shift(@ARGV),shift(@ARGV)); }
+    when ('group') { group(shift(@ARGV),shift(@ARGV)); }
+    when ('login') { login(shift(@ARGV)); }
+    when ('logout') { logout(shift(@ARGV)); }
+    default { usage(); }
 }
 
 sub diff {
@@ -47,29 +47,29 @@ sub checkout {
 }
 
 sub user {
-    switch(shift) {
-        case 'add' {UserManagement::Commands::add_user(shift);}
-        case 'rem' {UserManagement::Commands::rem_user_from_group(shift);}
-        case 'list' {UserManagement::Commands::list_users();}
-        case 'group' {
-            switch(shift) {
-                case 'add' {UserManagement::Commands::add_user_to_group(shift, shift);}
-                case 'rem' {UserManagement::Commands::rem_user_from_group(shift, shift);}
-                case 'list' {UserManagement::Commands::list_user_groups(shift);}
-                else {usage();}
+    given(shift) {
+        when ('add') {UserManagement::Commands::add_user(shift);}
+        when ('rem') {UserManagement::Commands::rem_user_from_group(shift);}
+        when ('list') {UserManagement::Commands::list_users();}
+        when ('group') {
+            given(shift) {
+                when ('add') {UserManagement::Commands::add_user_to_group(shift, shift);}
+                when ('rem') {UserManagement::Commands::rem_user_from_group(shift, shift);}
+                when ('list') {UserManagement::Commands::list_user_groups(shift);}
+                default {usage();}
             }
         }
-        else {usage();}
+        default {usage();}
     }
 }
 
 sub group {
-    switch(shift) {
-        case 'add' {UserManagement::Commands::group_add(shift);}
-        case 'rem' {UserManagement::Commands::group_rem(shift);}
-        case 'list' {UserManagement::Commands::list_groups();}
-        case 'members' {UserManagement::Commands::list_group_members(shift);}
-        else {usage();}
+    given(shift) {
+        when ('add') {UserManagement::Commands::group_add(shift);}
+        when ('rem') {UserManagement::Commands::group_rem(shift);}
+        when ('list') {UserManagement::Commands::list_groups();}
+        when ('members') {UserManagement::Commands::list_group_members(shift);}
+        default {usage();}
     }
 }
 
