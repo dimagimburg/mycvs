@@ -9,6 +9,9 @@ our @EXPORT = qw(
                 checkin_file checkout_file print_revision_diff
                 print_revisions
                 );
+# Internal libs
+use lib qw(../);
+use VersionManagement::Impl;
 
 # Checks in file. If first checkin uses function checkin_first.
 # also creates $filename.rev_num.diff. File will include reverse diff of file
@@ -29,6 +32,7 @@ sub checkout_file {
 # If revision not defined users last revision.
 sub print_revision_diff  {
     my ($file_path, $revision) = @_;
+    get_diff($file_path,$revision);
 }
 
 # Prints all revisions of file in pretty form.
