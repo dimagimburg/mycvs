@@ -3,11 +3,12 @@ package VersionManagement::Impl;
 use strict; use warnings;
 
 # Perl libs & vars
+use File::Basename;
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 make_checkin make_checkout get_diff
-                get_revisions
+                get_revisions format_time_stamp get_file_time set_file_time
                 );
 
 # Checks in file. If first checkin uses function checkin_first.
@@ -33,35 +34,88 @@ sub make_checkout {
     my ($file_path, $revision) = @_;
 }
 
+# Recieves file_path and revision to compare
+# Returns diff between given file and given revision
+# If revision not given returns diff between file and last revision.
 sub get_diff {
     my ($file_path, $revision) = @_;
-    my $old_diff = '';
-    if (defined($revision)) {
-        $old_diff = $file_path.'.'.$revision.'.'.'diff';
-    } else {
-        $old_diff = $file_path.'.'.'diff';
+    my @diff = ();
+    die "Incorrect revision.\n" if $revision <= 0;
+    
+    if (! defined($revision)) {
+        $revision = 0;  # Get last revision if exists
     }
     
-    # If given revision file not found exit
-    #open(old_handle, $old_file) or die "Unable to open given revision. $!\n";
     
+    my @revisions = get_revisions($file_path);
+    my $last_rev_path = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revisions[-1].'.diff';
     
+    @diff = get_diff_on_two_files($file_path, $last_rev_path);
+    if (($revision > 0) && ($revision < $revisions[-1] - 1)) {
+        # First merge is different.
+        my @old_rev_lines = read_lines_from_file($last_rev_path);
+        @old_rev_lines = merge_back_diff_on_file(\@old_rev_lines, \@diff);
+        
+        for (my $i = 2; $revision <= $revisions[$i]; $i++) {
+            $last_rev_path = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revisions[0-$i].'.diff';
+            @diff = read_lines_from_file($last_rev_path);
+            @old_rev_lines = merge_back_diff_on_file(\@old_rev_lines, \@diff);
+        }
+        # Temporary save file
+        save_line_array_to_file(\@old_rev_lines, $file_path.'.merged');
+        @diff = get_diff_on_two_files($file_path, $file_path.'.merged');
+        unlink $file_path.'.merged';
+    }
+    
+    return @diff;
 }
-# Merges diff on file. Receives file and diff as array of lines
-# Returns new file as array. pass then with \@
-sub merge_diif_on_file {
+# Read file to array of lines.
+sub read_lines_from_file {
+    my ($file) = @_;
+    open(file_handle, $file) or die "$!.\n";
+    my @lines = <file_handle>;
+    close file_handle;
+    return @lines;
+}
+sub save_line_array_to_file {
+    my ($arr, $filename) = @_;
+    my @array = @$arr;
+    open(file_handle, ">$filename") or die "Can't save file.\n";
+    foreach my $line(@array) {
+        print file_handle $line;
+    }
+    close(file_handle)
+}
+# Merges diff on file. Receives file and diff as array of lines (pass array with \@)
+# Returns new file as array. 
+sub merge_back_diff_on_file {
     my ($file, $diff) = @_;
     # Nasty PERL references. Ahhrrrrr :(
     my @file_array = @$file; my @diff_array = @$diff;
     my @new_array = ();
     
     foreach my $row(@diff_array) {
-        my @values = split(' ', $row);
-        my $file_row_op = $values[0]; # Extract row operation
+        my @values       = split(' ', $row);
+        my $file_row_op  = $values[0]; # Extract row operation
         my $file_row_num = $values[1]; # Extract row number
+        shift(@values); shift(@values); # Eliminate +- and row number
+        my $file_row_txt = join(' ', @values); # Get row text
         undef @values;
         
+        # Because we using reverse logic. We will treat
+        # + as - line and - as + line. Tricky :)
+        if ($file_row_op eq '+') {
+            # Remove line in file_array that wasn't exist in previous revision
+            splice @file_array, ($file_row_num-1), 1;
+        } elsif ($file_row_op eq '-') {
+            # Add line
+            splice @file_array, ($file_row_num-1), 0, $file_row_txt."\n";
+        } else {
+            # We found undefined operation sign. Shouldn't be here.
+            die "Found undefined diff operator. Probably corrupted file.\n";
+        }
     }
+    return @new_array;
     
 }
 # Returns diff of file from repository at given revision.
@@ -69,8 +123,8 @@ sub merge_diif_on_file {
 # if revision not defined uses latest revision
 # Returns diff array between two files, each cell represents
 # Cangeset. <-+> <line_num> <if + then here text>. Example
-# - 2
-# + 2 Some text
+# - 2 Some old text
+# + 2 Some new text
 sub get_diff_on_two_files {
     my ($new_file, $old_file) = @_;
 #    my $old_file = $file_path.'.'.$revision.'.'.'diff';
@@ -78,7 +132,7 @@ sub get_diff_on_two_files {
     my ($old_line, $new_line);
     
     open(new_handle, $new_file) or die "Unable to open file. $!. Is it exists?\n";
-    open(old_handle, $old_file) or die "Unable to open previous revision. $!\n";
+    open(old_handle, $old_file) or die "Unable to open previous revision. $!.\n";
     #if (! -T $file_path) {
     #    return; # Given file is binary file. Not trying to diff it
     #}
@@ -109,9 +163,67 @@ sub get_diff_on_two_files {
     return @diff;
 }
 
-# Returns all revision of given file
+# Returns all revision of given file.
+# sorted.
 sub get_revisions {
-    my ($file_path) = @_;
+    my ($file_path)   = @_;
+    my $rev_index = -2;
+    my $file_dir_name = dirname($file_path);
+    my $file_name     = basename($file_path);
+    my (@files, @revisions);
+    
+    @files = get_dir_contents($file_dir_name, $file_name)
+                or die "No revisions for the whole folder. Checkin something.\n";
+    
+    foreach my $file(@files) {
+        next if -d $file; # Skip if we got dir by mistake.
+        my @splited = split('\.', $file);
+        push @revisions, $splited[$rev_index] if $splited[$rev_index] ;
+    }
+    
+    @revisions = sort {$a <=> $b} @revisions;
+    
+    return @revisions;
+}
+
+# Returns list of files in given directory based on EXPR.
+# Returns undef if can't open dir.
+sub get_dir_contents {
+    my ($dir, $expr) = @_;
+    my @files = ();
+    $dir = "$dir/.mycvs";
+    
+    if (! -d "$dir") {
+        return; # Return undef
+    }
+    
+    opendir(dir_handle, $dir);
+    
+    @files = grep {/^${expr}/} readdir dir_handle;
+    
+    closedir(dir_handle);
+    return @files;
+}
+
+sub format_time_stamp {
+    my ($timestamp) = @_;
+    #print $timestamp;
+    my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($timestamp);
+    my $pretty_time = sprintf("%02d-%02d-%02d_%02d-%s-%d",
+                       $hour, $min, $sec, $mday, $months[$mon], $year+1900);
+    return $pretty_time;
+}
+
+sub get_file_time {
+    my ($file) = @_;
+    my @file_props = stat($file);
+    return $file_props[9];
+}
+
+sub set_file_time {
+    my ($file, $timestamp) = @_;
+    return utime($timestamp, $timestamp, $file);
 }
 
 1;

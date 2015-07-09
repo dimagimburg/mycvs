@@ -3,6 +3,7 @@ package VersionManagement::Commands;
 use strict; use warnings;
 
 # Perl libs & vars
+use File::Basename;
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
@@ -32,7 +33,10 @@ sub checkout_file {
 # If revision not defined users last revision.
 sub print_revision_diff  {
     my ($file_path, $revision) = @_;
-    get_diff($file_path,$revision);
+    my @lines = get_diff($file_path,$revision);
+    foreach(@lines) {
+        print $_;
+    }
 }
 
 # Prints all revisions of file in pretty form.
@@ -42,6 +46,20 @@ sub print_revision_diff  {
 # Revision: <>, TimeStamp: <>
 # Revision: <>, TimeStamp: <>
 sub print_revisions {
+    my ($file_path) = @_;
+    my @revisions = get_revisions($file_path);
+    
+    if (@revisions) {
+        print "Revisions for the file: '$file_path':\n";
+        print "==========================================\n";
+        foreach(@revisions) {
+            my $diff_file = dirname($file_path)."/.mycvs/".basename($file_path).".$_.diff";
+            my $timestamp = format_time_stamp(get_file_time($diff_file));
+            printf ("Revision: %4d, Timestamp: %s\n", $_, $timestamp) if defined($_);
+        }
+    } else {
+        die "Can't find revisions of given file.\n";
+    }
     
 }
 

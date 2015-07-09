@@ -31,6 +31,7 @@ given(shift(@ARGV)) {
     when ('group') { group(shift(@ARGV),shift(@ARGV)); }
     when ('login') { login(shift(@ARGV)); }
     when ('logout') { logout(shift(@ARGV)); }
+    when ('revisions') { get_revisions(shift(@ARGV)); }
     default { usage(); } 
 }
 
@@ -81,12 +82,16 @@ sub logout {
     UserManagement::Commands::logout_impl(shift);
 }
 
+sub get_revisions {
+    VersionManagement::Commands::print_revisions(shift)
+}
 
 sub usage {
     print "\n    USAGE:\n";
     print "    $0 checkin <filename>                - add/checking file to repository.\n";
     print "    $0 checkout <filename>               - checkout file from repository.(Overwrites)\n";
     print "    $0 checkout -r <revision> <filename> - checkout file from repository at specific revision.(Overwrites)\n";
+    print "    $0 revisions <filename>              - list file revisions.\n";
     print "    $0 diff <filename>                   - displays diff of local file and latest repo revision.\n";
     print "    $0 diff -r <revision> <filename>     - displays diff of local file and specific repo revision.\n";
     print "    $0 group add <group>                 - Add group.\n";
