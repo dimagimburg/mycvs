@@ -14,6 +14,8 @@ use strict; use warnings;
 # Perl libs & vars
 use Digest::MD5 qw(md5_hex);
 use Exporter qw(import);
+use File::Path qw(make_path);
+use RepoManagement::Configuration qw<$MYCVS_GLOBAL_BASEDIR $MYCVS_USERS_DB>;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 create_user_record create_group_record
@@ -26,11 +28,49 @@ our @EXPORT = qw(
 use lib qw(../);
 use RepoManagement::Configuration;
 
-
 # Creates use record in DB
 sub create_user_record {
     my ($user_name, $pass_hash) = @_;
-    
+    $pass_hash = generate_pass_hash($pass_hash);
+    print "username: ".$user_name.", password: ".$pass_hash."\n";
+    print $MYCVS_USERS_DB."\n";
+
+    if(exists_user_db_file($MYCVS_USERS_DB)){
+        print "file exists  \n";
+        print "need to check if user exists\n";
+    } else {
+        if(exists_base_dir($MYCVS_GLOBAL_BASEDIR)){
+            print "base dir exists create user db";
+            print "file not exists $MYCVS_GLOBAL_BASEDIR\n";
+            print "creating file\n";
+            open(my $fh, '>', $MYCVS_USERS_DB) or die "\n\nerror creating user db\n\n";
+            print $fh "$user_name:$pass_hash";
+            close($fh);
+            print "created!\n\n";
+        } else {
+            # CANT ADD USER WHEN THERE IS NO .MYCVS INITIALIZED IN OPT
+            # SEE WHAT IS THE SOLUTION
+            print "repository is not initialized";
+        }
+    }
+}
+
+# Check if users db exist
+sub exists_user_db_file {
+    my ($path_user_db_file) = @_;
+    if (-e $path_user_db_file) { return 1 }
+    return 0;
+}
+
+sub exists_base_dir {
+    my ($base_dir) = @_;
+    if(-d $base_dir) { return 1 }
+    return 0;
+}
+
+# Creates user db
+sub create_user_db {
+
 }
 
 
