@@ -10,6 +10,9 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 make_checkin make_checkout get_diff
                 get_revisions format_time_stamp get_file_time set_file_time
+                save_lines_array_to_file read_lines_from_file merge_back_diff_on_file
+                get_revisions get_dir_contents format_time_stamp get_file_time
+                set_file_time
                 );
 
 # Checks in file. If first checkin uses function checkin_first.
@@ -41,7 +44,7 @@ sub make_checkin {
         }
         
         my $prev_time = get_file_time($prev_revision_file);
-        save_line_array_to_file(\@diff_rev, $prev_revision_file);
+        save_lines_array_to_file(\@diff_rev, $prev_revision_file);
         set_file_time($prev_revision_file, $prev_time);
     }
     
@@ -54,6 +57,27 @@ sub make_checkin {
 # If revision not defined users last revision
 sub make_checkout {
     my ($file_path, $revision) = @_;
+    my @revisions = get_revisions($file_path);
+    if (! defined($revision)) {
+        # Will get the latest file if available.
+        $revision = 1;
+    }
+    
+    if (grep (/^$revision$/, @revisions)) {
+        # Found needed revision. will merge diff before copy.
+        my $latest_diff = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revisions[-1].'.diff';
+        my $given_diff = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revision.'.diff';
+        
+        copy $latest_diff, $file_path or die "Cant\'t find one of the revisions.\n";
+        
+        my @latest_lines = read_lines_from_file($file_path);
+        my @diff_to_merge = get_diff($file_path, $revision);
+        my @merged_file = merge_back_diff_on_file(\@latest_lines, \@diff_to_merge);
+        save_lines_array_to_file(\@merged_file, $file_path);
+        set_file_time($file_path, get_file_time($given_diff));
+    } else {
+        die "Revision: '$revision' does not exists.\n";
+    }
 }
 
 # Recieves file_path and revision to compare
@@ -62,29 +86,33 @@ sub make_checkout {
 sub get_diff {
     my ($file_path, $revision) = @_;
     my @diff = ();
-    die "Incorrect revision.\n" if $revision <= 0;
     
     if (! defined($revision)) {
         $revision = 0;  # Get last revision if exists
+    } elsif ($revision <= 0) {
+        die "Incorrect revision.\n";
     }
     
     
     my @revisions = get_revisions($file_path);
+    
     my $last_rev_path = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revisions[-1].'.diff';
     
     @diff = get_diff_on_two_files($file_path, $last_rev_path);
-    if (($revision > 0) && ($revision < $revisions[-1] - 1)) {
+    if (($revision > 0) && ($revision <= $revisions[-1])) {
         # First merge is different.
         my @old_rev_lines = read_lines_from_file($last_rev_path);
         @old_rev_lines = merge_back_diff_on_file(\@old_rev_lines, \@diff);
         
-        for (my $i = 2; $revision <= $revisions[$i]; $i++) {
+        for (my $i = 2; $revision < $revisions[-1]; $i++) {
             $last_rev_path = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revisions[0-$i].'.diff';
             @diff = read_lines_from_file($last_rev_path);
             @old_rev_lines = merge_back_diff_on_file(\@old_rev_lines, \@diff);
+            
+            $revision++;
         }
         # Temporary save file
-        save_line_array_to_file(\@old_rev_lines, $file_path.'.merged');
+        save_lines_array_to_file(\@old_rev_lines, $file_path.'.merged');
         @diff = get_diff_on_two_files($file_path, $file_path.'.merged');
         unlink $file_path.'.merged';
     }
@@ -99,7 +127,7 @@ sub read_lines_from_file {
     close file_handle;
     return @lines;
 }
-sub save_line_array_to_file {
+sub save_lines_array_to_file {
     my ($arr, $filename) = @_;
     my @array = @$arr;
     open(file_handle, ">$filename") or die "Can't save file.\n";
@@ -114,7 +142,6 @@ sub merge_back_diff_on_file {
     my ($file, $diff) = @_;
     # Nasty PERL references. Ahhrrrrr :(
     my @file_array = @$file; my @diff_array = @$diff;
-    my @new_array = ();
     
     foreach my $row(@diff_array) {
         my @values       = split(' ', $row);
@@ -122,6 +149,7 @@ sub merge_back_diff_on_file {
         my $file_row_num = $values[1]; # Extract row number
         shift(@values); shift(@values); # Eliminate +- and row number
         my $file_row_txt = join(' ', @values); # Get row text
+        
         undef @values;
         
         # Because we using reverse logic. We will treat
@@ -131,13 +159,13 @@ sub merge_back_diff_on_file {
             splice @file_array, ($file_row_num-1), 1;
         } elsif ($file_row_op eq '-') {
             # Add line
-            splice @file_array, ($file_row_num-1), 0, $file_row_txt."\n";
+            splice @file_array, ($file_row_num), 0, $file_row_txt."\n";
         } else {
             # We found undefined operation sign. Shouldn't be here.
             die "Found undefined diff operator. Probably corrupted file.\n";
         }
     }
-    return @new_array;
+    return @file_array;
     
 }
 # Returns diff of file from repository at given revision.
