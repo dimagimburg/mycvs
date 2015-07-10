@@ -38,7 +38,7 @@ sub add_user {
 }
 # Simply prints global user list
 sub list_users {
-    
+    UserManagement::Impl::list_users();
 }
 # Interactively add user to group
 sub add_user_to_group {

@@ -57,6 +57,31 @@ sub create_user_record {
     }
 }
 
+# Prints list users sorted by ABC
+sub list_users {
+    
+    my $username;
+    my @usernames;
+    my @row_splited;
+
+    open(my $fh, '<:encoding(UTF-8)', $MYCVS_USERS_DB);
+    
+    my $index = 0;
+    while (my $row = <$fh>) {
+        @row_splited = split(/:/,$row,2);
+        $usernames[$index] = $row_splited[0];
+        $index++;
+    }
+
+    @usernames = sort(@usernames);
+
+    foreach $username (@usernames){
+        print $username."\n";
+    }
+
+    close($fh);
+}
+
 # Check if users db exist
 sub exists_user_db_file {
     my ($path_user_db_file) = @_;
