@@ -33,7 +33,8 @@ sub logout_impl {
 }
 # Interactive user add
 sub add_user {
-    my ($user) = @_;
+    my ($user_name,$password) = @_;
+    create_user_record($user_name,$password);
 }
 # Simply prints global user list
 sub list_users {

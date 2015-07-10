@@ -4,7 +4,10 @@ use strict; use warnings;
 use Getopt::Long;
 use File::Basename;
 use feature qw(switch);
-use experimental qw(smartmatch);
+
+#use experimental qw(smartmatch);
+# dima : for me this only works
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 # Internal libs
 my $rundir;
@@ -49,7 +52,7 @@ sub checkout {
 
 sub user {
     given(shift) {
-        when ('add') {UserManagement::Commands::add_user(shift);}
+        when ('add') {UserManagement::Commands::add_user(shift,shift);}
         when ('rem') {UserManagement::Commands::rem_user_from_group(shift);}
         when ('list') {UserManagement::Commands::list_users();}
         when ('group') {
