@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin/env perl
 # Perl libs
 use strict; use warnings;
 use Getopt::Long;
