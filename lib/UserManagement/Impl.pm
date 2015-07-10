@@ -32,21 +32,23 @@ use RepoManagement::Configuration;
 sub create_user_record {
     my ($user_name, $pass_hash) = @_;
     $pass_hash = generate_pass_hash($pass_hash);
-    print "username: ".$user_name.", password: ".$pass_hash."\n";
-    print $MYCVS_USERS_DB."\n";
 
     if(exists_user_db_file($MYCVS_USERS_DB)){
-        print "file exists  \n";
-        print "need to check if user exists\n";
+        # file user.db exists
+        if(exists_user($user_name)){
+            # username entered already exists, show error message
+            print "user: ".$user_name." already exists, cannot add existing user.\n";
+        } else {
+            # file exists, new user, add user to file
+            append_user_to_use_db_file($user_name,$pass_hash);
+            print "user: ".$user_name." successfully added.\n";
+        }
     } else {
+        # user.db not exists
         if(exists_base_dir($MYCVS_GLOBAL_BASEDIR)){
-            print "base dir exists create user db";
-            print "file not exists $MYCVS_GLOBAL_BASEDIR\n";
-            print "creating file\n";
-            open(my $fh, '>', $MYCVS_USERS_DB) or die "\n\nerror creating user db\n\n";
-            print $fh "$user_name:$pass_hash";
-            close($fh);
-            print "created!\n\n";
+            # /opt/.mycvs exists create file user.db and add the user
+            append_user_to_use_db_file($user_name,$pass_hash);
+            print "user: ".$user_name." successfully added.\n";
         } else {
             # CANT ADD USER WHEN THERE IS NO .MYCVS INITIALIZED IN OPT
             # SEE WHAT IS THE SOLUTION
@@ -60,6 +62,37 @@ sub exists_user_db_file {
     my ($path_user_db_file) = @_;
     if (-e $path_user_db_file) { return 1 }
     return 0;
+}
+
+sub append_user_to_use_db_file {
+    my($username,$password) = @_;
+    open(my $fh, '>>', $MYCVS_USERS_DB) or die "\n\nerror opening user.db file\n\n";
+    print $fh "$username:$password\n";
+    close($fh);
+}
+
+sub exists_user {
+
+    my ($username) = @_;
+
+    if (exists_user_db_file($MYCVS_USERS_DB)) {
+
+        my $pattern_username_begining_line = "^".$username;
+
+        open(my $fh, '<:encoding(UTF-8)', $MYCVS_USERS_DB);
+
+        while (my $row = <$fh>) {
+            chomp $row;
+            if($row =~ /$pattern_username_begining_line/) { return 1 }
+        }
+
+        close($fh);
+
+        return 0;
+
+    } else {
+        print "please initialize mycvs";
+    }
 }
 
 sub exists_base_dir {
