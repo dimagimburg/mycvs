@@ -4,6 +4,7 @@ use strict; use warnings;
 
 # Perl libs & vars
 use File::Basename;
+use File::Copy qw(copy);
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
@@ -16,15 +17,36 @@ our @EXPORT = qw(
 # + TimeStamp of date when created.
 sub make_checkin {
     my ($file_path) = @_;
+    RepoManagement::Init::init_local(dirname($file_path));
+    my @revisions = get_revisions($file_path);
+    my $next_revision = 1;
     
-}
-
-# Add new file to repository also creates $filename.rev_num.diff file under .mycvs directory
-# at the same level as file. Uses: RepoManagement::Init::init_local() that will create .mycvs dir
-# if not exists.
-sub checkin_first {
-    my ($file_path) = @_;
+    if (@revisions) {
+        $next_revision = $next_revision + $revisions[-1];
+    }
     
+    my $next_revision_file = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$next_revision.'.diff';
+    
+    if ($next_revision > 1) {
+        my $prev_revision_file = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revisions[-1].'.diff';
+        if (get_file_time($prev_revision_file) == get_file_time($file_path)) {
+            print "Nothing changed in file. Nothing to checkin.\n";
+            return;
+        }
+        
+        my @diff_rev = get_diff_on_two_files($file_path, $prev_revision_file);
+        if (! @diff_rev) {
+            print "Only timestamp changed in file. Nothing to checkin.\n";
+            return;
+        }
+        
+        my $prev_time = get_file_time($prev_revision_file);
+        save_line_array_to_file(\@diff_rev, $prev_revision_file);
+        set_file_time($prev_revision_file, $prev_time);
+    }
+    
+    copy $file_path, $next_revision_file;
+    set_file_time($next_revision_file,get_file_time($file_path));
 }
 
 # Checkouts file from repository at given revision.
@@ -171,9 +193,10 @@ sub get_revisions {
     my $file_dir_name = dirname($file_path);
     my $file_name     = basename($file_path);
     my (@files, @revisions);
+    @revisions = ();
     
-    @files = get_dir_contents($file_dir_name, $file_name)
-                or die "No revisions for the whole folder. Checkin something.\n";
+    @files = get_dir_contents($file_dir_name, $file_name);
+                #or die "No revisions for the whole folder. Checkin something.\n";
     
     foreach my $file(@files) {
         next if -d $file; # Skip if we got dir by mistake.

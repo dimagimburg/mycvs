@@ -19,7 +19,7 @@ use VersionManagement::Impl;
 # + TimeStamp of date when created.
 sub checkin_file {
     my ($file_path) = @_;
-    
+    make_checkin($file_path);
 }
 
 # Checkouts file from repository at given revision.

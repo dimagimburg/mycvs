@@ -4,6 +4,7 @@ package RepoManagement::Init;
 # Perl libs & vars
 use strict; use warnings;
 use File::Path qw(make_path);
+use File::Basename;
 use Cwd;
 use Exporter qw(import);
 our @ISA = qw(Exporter);
@@ -28,22 +29,19 @@ sub init_global {
 # Initialize .mycvs store in new directory.
 # This folder will store diffs/revisions
 sub init_local {
-    my $dir = getcwd();
+    my ($dir) = @_;
     check_and_create_dir($dir.'/.mycvs');
 }
 
 sub check_and_create_dir {
     my ($dir) = @_;
-    if (defined($dir) && $dir ne "") {
-        if (! -d $dir) {
-            make_path($dir) or die "Couldn't create dir '$dir'. Please verify that directory is writable";
+    if (defined("$dir") && $dir ne "") {
+        if (! -e "$dir") {
+            make_path($dir) or die "Couldn't create dir '$dir'. Please verify that directory is writable.\n";
         }
-        return 2;
     } else {
-        printf("Something went wrong. Received '%s' as dirname.", $dir);
-        return 1;
+        die "Something went wrong. Received '$dir' as dirname.";
     }
-    return 0;
 }
 
 # File structure is like /etc/passwd
