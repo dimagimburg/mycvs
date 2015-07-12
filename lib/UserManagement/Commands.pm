@@ -34,7 +34,7 @@ sub logout_impl {
 # Interactive user add
 sub add_user {
     my ($user_name,$password) = @_;
-    create_user_record($user_name,$password);
+    UserManagement::Impl::create_user_record($user_name,$password);
 }
 # Simply prints global user list
 sub list_users {
@@ -43,6 +43,7 @@ sub list_users {
 # Interactively add user to group
 sub add_user_to_group {
     my ($user, $group) = @_;
+    UserManagement::Impl::add_user_to_group_impl($user, $group);
 }
 # Interactively removes user from group
 sub rem_user_from_group {
@@ -63,6 +64,7 @@ sub list_groups {
 # Interactively adds group.
 sub group_add {
     my ($group) = @_;
+    create_group_record($group);
 }
 # Interactively removes group.
 sub group_rem {

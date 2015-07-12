@@ -3,7 +3,7 @@ package RepoManagement::Configuration;
 
 use Exporter qw(import);
 our @ISA = 'Exporter';
-our @EXPORT_OK = qw($MYCVS_GLOBAL_BASEDIR $MYCVS_GLOBAL_CONFIG_LOC $MYCVS_USERS_DB);
+our @EXPORT_OK = qw($MYCVS_GLOBAL_BASEDIR $MYCVS_GLOBAL_CONFIG_LOC $MYCVS_USERS_DB $MYCVS_GROUPS_DB);
 
 # MYCVS_GLOBAL_BASEDIR repository independent
 #our $MYCVS_GLOBAL_BASEDIR = $ENV{HOME}.qw(/.mycvs);
