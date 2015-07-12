@@ -33,7 +33,7 @@ sub create_user_record {
     my ($user_name, $pass_hash) = @_;
     $pass_hash = generate_pass_hash($pass_hash);
 
-    if(exists_user_db_file($MYCVS_USERS_DB)){
+    if(exists_user_db_file()){
         # file user.db exists
         if(exists_user($user_name)){
             # username entered already exists, show error message
@@ -45,7 +45,7 @@ sub create_user_record {
         }
     } else {
         # user.db not exists
-        if(exists_base_dir($MYCVS_GLOBAL_BASEDIR)){
+        if(exists_base_dir()){
             # /opt/.mycvs exists create file user.db and add the user
             append_user_to_use_db_file($user_name,$pass_hash);
             print "user: ".$user_name." successfully added.\n";
@@ -84,8 +84,7 @@ sub list_users {
 
 # Check if users db exist
 sub exists_user_db_file {
-    my ($path_user_db_file) = @_;
-    if (-e $path_user_db_file) { return 1 }
+    if (-e $MYCVS_USERS_DB) { return 1 }
     return 0;
 }
 
@@ -100,7 +99,7 @@ sub exists_user {
 
     my ($username) = @_;
 
-    if (exists_user_db_file($MYCVS_USERS_DB)) {
+    if (exists_user_db_file()) {
 
         my $pattern_username_begining_line = "^".$username;
 
@@ -121,8 +120,7 @@ sub exists_user {
 }
 
 sub exists_base_dir {
-    my ($base_dir) = @_;
-    if(-d $base_dir) { return 1 }
+    if(-d $MYCVS_GLOBAL_BASEDIR) { return 1 }
     return 0;
 }
 
