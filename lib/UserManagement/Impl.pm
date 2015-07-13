@@ -21,7 +21,7 @@ our @EXPORT = qw(
                 create_user_record create_group_record
                 get_user_groups add_user_to_group_impl remove_user_from_group
                 remove_group change_pass get_pass_hash login_user
-                logout_user get_session
+                logout_user get_session exists_user generate_pass_hash
                 );
                 
 # Internal libs
@@ -249,6 +249,19 @@ sub change_pass {
 # Returns password hash for user.
 sub get_pass_hash {
     my ($user) = @_;
+    my @row_splited;
+    my @pass_hash;
+
+    open(my $fh, '<:encoding(UTF-8)', $MYCVS_USERS_DB);
+    
+    while (my $row = <$fh>) {
+        @row_splited = split(/:/,$row,2);
+        if($row_splited[0] eq $user){
+            @pass_hash = split(/\n/,$row_splited[1],2);
+            return $pass_hash[0];
+        }
+    }
+    return 0;
 }
 
 # Retuns hash of given password. probably will be MD5 hash
@@ -286,13 +299,13 @@ sub get_session {
 sub search_pattern_in_line_begining{
     my ($pattern,$file_path) = @_;
 
-    my $pattern_username_begining_line = "^".$pattern;
+    my $pattern_begining_line = "^$pattern";
 
         open(my $fh, '<:encoding(UTF-8)', $file_path);
 
         while (my $row = <$fh>) {
             chomp $row;
-            if($row =~ /$pattern_username_begining_line/) { 
+            if($row =~ /$pattern_begining_line/) { 
                 close($fh);
                 return 1 
             }

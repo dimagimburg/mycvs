@@ -13,6 +13,26 @@ our @EXPORT = qw(init_global init_local);
 # Internal libs
 use lib qw(../);
 use RepoManagement::Configuration;
+use UserManagement::Impl;
+
+# Initialize a new repo with username and password for admin
+sub init{
+    my($username,$password) = @_;
+
+    # HERE INITIALIZE ALL THE LOCAL AND GLOBAL IF NECCESSARTY
+
+    if(exists_user($username)){
+        # user exists
+        if(get_pass_hash($username) eq generate_pass_hash($password)){
+            print "user ok pass ok\n";
+            print "create repository with admin and password and ask to login to open admin session";
+        } else {
+            print "password for user $username is incorrect\n";
+        }
+    } else {
+        print "user: $username not exists in user.db\n";      
+    }
+}
 
 
 # Create global dir tree

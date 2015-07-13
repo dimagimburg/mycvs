@@ -19,6 +19,7 @@ use VersionManagement::Commands;
 use UserManagement::Commands; 
 
 given(shift(@ARGV)) {
+    when ('init'){ init(shift(@ARGV),shift(@ARGV)); }
     when ('diff') {
         my $revision;
         GetOptions('-r=i' => \$revision) or die usage();
@@ -40,6 +41,10 @@ given(shift(@ARGV)) {
 
 sub diff {
     VersionManagement::Commands::print_revision_diff(shift, shift);
+}
+
+sub init {
+    RepoManagement::Init::init(shift,shift);
 }
 
 sub checkin {
@@ -91,6 +96,7 @@ sub get_revisions {
 
 sub usage {
     print "\n    USAGE:\n";
+    print "    $0 init <user> <password>            - initializing local repository, with user and password.\n";
     print "    $0 checkin <filename>                - add/checking file to repository.\n";
     print "    $0 checkout <filename>               - checkout file from repository.(Overwrites)\n";
     print "    $0 checkout -r <revision> <filename> - checkout file from repository at specific revision.(Overwrites)\n";
