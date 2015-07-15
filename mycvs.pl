@@ -6,7 +6,7 @@ use File::Basename;
 use feature qw(switch);
 
 #use experimental qw(smartmatch);
-# dima : for me this only works
+# ix for dima's perl
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 # Internal libs
@@ -16,7 +16,8 @@ use lib "$rundir/lib";
 use RepoManagement::Init;
 use RepoManagement::Commands;
 use VersionManagement::Commands;
-use UserManagement::Commands; 
+use UserManagement::Commands;
+use HTTP::HttpServer;
 
 given(shift(@ARGV)) {
     when ('init'){ init(shift(@ARGV),shift(@ARGV)); }
@@ -36,6 +37,7 @@ given(shift(@ARGV)) {
     when ('login') { login(shift(@ARGV)); }
     when ('logout') { logout(shift(@ARGV)); }
     when ('revisions') { get_revisions(shift(@ARGV)); }
+    when ('server') { http_server(shift(@ARGV)); }
     default { usage(); } 
 }
 
@@ -92,6 +94,10 @@ sub logout {
 
 sub get_revisions {
     VersionManagement::Commands::print_revisions(shift)
+}
+
+sub http_server {
+    HTTP::HttpServer::main(shift);
 }
 
 sub usage {

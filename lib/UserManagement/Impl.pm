@@ -15,7 +15,6 @@ use strict; use warnings;
 use Digest::MD5 qw(md5_hex);
 use Exporter qw(import);
 use File::Path qw(make_path);
-use RepoManagement::Configuration qw<$MYCVS_GLOBAL_BASEDIR $MYCVS_USERS_DB $MYCVS_GROUPS_DB>;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 create_user_record create_group_record
@@ -26,7 +25,7 @@ our @EXPORT = qw(
                 
 # Internal libs
 use lib qw(../);
-use RepoManagement::Configuration;
+use RepoManagement::Configuration qw($MYCVS_GLOBAL_BASEDIR $MYCVS_USERS_DB $MYCVS_GROUPS_DB);
 
 ############################# USERS ###############################
 
@@ -307,7 +306,7 @@ sub search_pattern_in_line_begining{
             chomp $row;
             if($row =~ /$pattern_begining_line/) { 
                 close($fh);
-                return 1 
+                return 1;
             }
         }
 

@@ -55,9 +55,15 @@ sub make_checkin {
 # Checkouts file from repository at given revision.
 # Prints error if file not in repository or revision not found.
 # If revision not defined users last revision
+# returns timesamp and merged array of file lines
 sub make_checkout {
     my ($file_path, $revision) = @_;
     my @revisions = get_revisions($file_path);
+    my $timestamp; my @merged_file;
+    if (! lock_file($file_path)) {
+        return;
+    }
+    
     if (! defined($revision)) {
         # Will get the latest file if available.
         $revision = 1;
@@ -72,12 +78,14 @@ sub make_checkout {
         
         my @latest_lines = read_lines_from_file($file_path);
         my @diff_to_merge = get_diff($file_path, $revision);
-        my @merged_file = merge_back_diff_on_file(\@latest_lines, \@diff_to_merge);
-        save_lines_array_to_file(\@merged_file, $file_path);
-        set_file_time($file_path, get_file_time($given_diff));
+        @merged_file = merge_back_diff_on_file(\@latest_lines, \@diff_to_merge);
+        #save_lines_array_to_file(\@merged_file, $file_path);
+        #$timestamp = get_file_time($given_diff);
+        #set_file_time($file_path, get_file_time($given_diff));
     } else {
-        die "Revision: '$revision' does not exists.\n";
+        return;
     }
+    return ($timestamp, @merged_file);
 }
 
 # Recieves file_path and revision to compare
@@ -275,6 +283,18 @@ sub get_file_time {
 sub set_file_time {
     my ($file, $timestamp) = @_;
     return utime($timestamp, $timestamp, $file);
+}
+
+sub lock_file {
+    my ($file_path) = @_;
+    
+    return 1;
+}
+
+sub unlock_file {
+    my ($file_path) = @_;
+    
+    return 1;
 }
 
 1;

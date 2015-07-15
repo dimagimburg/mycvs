@@ -30,7 +30,12 @@ sub checkin_file {
 sub checkout_file {
     my ($file_path, $revision) = @_;
     die "'$file_path' $!.\n" if (! -f $file_path);
-    make_checkout($file_path, $revision);
+    my ($timestamp, @lines_array) = make_checkout($file_path, $revision);
+    if ((!defined($timestamp)) || (@lines_array)) {
+        die "Revision: '$revision' does not exists.\n";
+    }
+    save_lines_array_to_file(\@lines_array, $file_path);
+    set_file_time($file_path, $timestamp);
 }
 
 # Prints diff in prety form at given revision
