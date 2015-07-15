@@ -21,3 +21,23 @@ dima 14.7
       
     * users :
       - checkin/checkout
+
+# Web Server API
+
+* GET:
+   - /repo/diff?reponame=<repo_name>&filename=<repo_file_path>&revision=<rev#>
+   - /repo/checkout?reponame=<repo_name>&filename=<repo_file_path>&revision=<revision#>
+   - /repo/revisions
+
+* POST:
+   - /repo/checkin?reponame=<repo_name>&filename=<repo_file_path>
+   - /repo/add?reponame=<repo_name>
+   - /repo/user/add?reponame=<repo_name>&username=<username>
+   - /repo/ulock?filename=<repo_file_path>
+
+   - /user/add?username=<username>&pass=<hash>&admin=<true/false>
+   - /user/alter?username=<username>
+* DELETE:
+   - /user/rem?username=<username>
+   - /repo/user/del?reponame=<reponame>
+
