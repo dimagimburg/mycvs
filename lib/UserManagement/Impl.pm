@@ -21,6 +21,7 @@ our @EXPORT = qw(
                 get_user_groups add_user_to_group_impl remove_user_from_group
                 remove_group change_pass get_pass_hash login_user
                 logout_user get_session exists_user generate_pass_hash
+                exist_user_in_group is_user_admin create_admin_user
                 );
                 
 # Internal libs
@@ -320,5 +321,29 @@ sub exists_base_dir {
     if(-d $MYCVS_GLOBAL_BASEDIR) { return 1 }
     return 0;
 }
+
+# Will check if user exists in given group
+sub exist_user_in_group {
+    my ($username, $groupname) = @_;
+    
+    
+    return 1;
+}
+
+# Will check if user is admin user
+sub is_user_admin {
+    my ($username) = @_;
+    
+    
+    return 1;
+}
+
+sub create_admin_user {
+    my ($username, $pass_hash) = @_;
+    
+    
+}
+
+
 
 1;

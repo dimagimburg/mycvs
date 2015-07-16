@@ -48,12 +48,15 @@ sub start_server {
         #print $request_version."\n";
         given($request_type) {
             when("POST") {
-                ($header, $data) = HTTP::HttpServerImpl::process_post($request_path, $user, $pass);
+                print "Processing POST Request\n";
+                ($header, $data) = HTTP::HttpServerImpl::process_post($request_path, $user, $pass, $data);
             }
             when("GET") {
+                print "Processing GET Request\n";
                 ($header, $data) = HTTP::HttpServerImpl::process_get($request_path, $user, $pass);
             }
             when("DELETE") {
+                print "Processing DELETE Request\n";
                 ($header, $data) = HTTP::HttpServerImpl::process_delete($request_path, $user, $pass);
             }
             default{
@@ -63,6 +66,7 @@ sub start_server {
             }
         }
         HTTP::HttpServerImpl::send_response($server->type, $header, $data, $client);
+        print "==============Done processing================\n";
         close $client;
         next;
     }

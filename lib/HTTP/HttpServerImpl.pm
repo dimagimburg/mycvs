@@ -74,27 +74,6 @@ sub new {
 }
  
 ###################################################
-# Pre: Unparsed CGI data string                   #
-# Post: Formatted CGI variables and values        #
-# Function: Formats CGI data from client request  #
-###################################################
-sub parse_cgi {
-    my $cgi_vars;
-        foreach (@_){
-            if ($_ =~ m/\=/i){
-                my @split1 = split (/\&/, $_);
-                foreach (@split1) {
-                    $_ =~ s/^\s+|\s+$//g;
-                    $_ =~ s/\+/ /g;
-                    (my $var, my $val) = split (/\=/, $_);
-                    $cgi_vars .= "\$$var \= \"$val\"\;\n";
-                }
-            }
-        }
-    return $cgi_vars;
-}
-
-###################################################
 # Pre: Server type, response header,              #
 #      requested file, client socket connection   #
 # Post: None                                      #
@@ -139,32 +118,6 @@ sub get_request_params {
     return ($request, $cgi_data);
 }
 
-###################################################
-# Pre: request file path, length of request file  #
-# Post: HTTP header                               #
-# Function: Creates an HTTP header using the file #
-#           extension of the request and the      #
-#           length of the request page            #
-###################################################
-sub create_header {
-    my ($request_path, $length) = @_;
-    my @request_file = split (/\//, $request_path);
-    (my $temp, my $file_ext) = split (/\./, $request_file[-1]);
-    my $mime_type;
-    open MIME_TYPES, '../conf/MIME.types' || die "Can't find MIME type file!";
-    while (<MIME_TYPES>) {
-	(my $ext, my $mime) = split (/ /, $_);
-	if ($ext eq '.'.$file_ext) {package UserManagement::Impl;
-	    $mime_type = $mime;
-	}
-    }
-    if (!$mime_type) {
-	$mime_type = 'text/html';
-    }
-    close MIME_TYPES;
-    my $HTTP_header = "HTTP/1.0 200 OK\nServer: MyCVS WebServer\nContent-Length: ".($length)."\nContent-Type: $mime_type\n\n";
-    return $HTTP_header;
-}
 
 sub default_header {
     my ($body_len, $aditional_header) = @_;
@@ -206,38 +159,89 @@ sub not_supported_message {
     return $message;
 }
 
+sub file_locked_message {
+    my ($repo, $file_path) = @_;
+    my $body = "Given file: $file_path in Repo: $repo locked by different user.\r\n";
+    my $header = "HTTP/1.0 403 Forbidden\nContent-Type: text/plain\r\n";
+    my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
+    my $message = $header.$content_len.$body;
+    return $message;
+}
+
 sub not_found_message {
     my $body = "<html><h2>Not Found</h2></html>";
-    my $header = "HTTP/1.0 404 Not Foundr\nContent-Type: text/plain\r\n";
+    my $header = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\n";
     my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
     my $message = $header.$content_len.$body;
     return $message;
 }
 
 sub process_post {
-    my ($request_path, $user, $pass) = @_;
+    my ($request_path, $user, $pass, $data) = @_;
+    my ($command_line, $command, $vars_line, $header, %vars);
+    #if (authorize_user($user, $pass) ne 200) {
+    #    return (get_auth_message(), "");
+    #}
+    
+    # Here user was already been authorized.
+    ($command_line, $vars_line) = split_address($request_path);
+    %vars = parse_vars($vars_line);
+    
+    given(get_parent_command($command_line)) {
+        when("repo") {
+            print "Processing 'repo' Request\n";
+            $header = repo_post_commands(get_sub_command($command_line), $user, $data, %vars);
+        }
+        when("user") {
+            print "Processing 'user' Request\n";
+            $header = user_post_commands(get_sub_command($command_line), $user, %vars);
+        }
+        default {
+            print "Not supported Request\n";
+            return (not_supported_message($request_path), "");
+        }
+    }
+    
+    if ((!defined($header))) {
+        $header = not_supported_message($request_path);
+    } elsif ($header eq "locked") {
+        $header = file_locked_message($vars{'reponame'}, $vars{'filename'});
+    } else {
+        $header = default_header(0, $header);
+    }
+    
+    
+    return ($header, "");
     
 }
 # Returns Header + Data content
 sub process_get {
     my ($request_path, $user, $pass) = @_;
-    my ($command_with_vars, $command, $vars_line, $data, $header, %vars, @splitted_path);
+    my ($command_line, $command, $vars_line, $data, $header, %vars);
     #if (authorize_user($user, $pass) ne 200) {
     #    return (get_auth_message(), "");
     #}
-    @splitted_path = split ('/', $request_path);
-    if ((@splitted_path) && ($splitted_path[1] ne "repo")) {
-        return (not_supported_message($request_path), "");
-    }
     
-    $command_with_vars = $splitted_path[2];
-    ($command, $vars_line) = split('\?', $command_with_vars);
+    # Here user was already been authorized.
+    ($command_line, $vars_line) = split_address($request_path);
     %vars = parse_vars($vars_line);
-    ($header, $data) = get_content($command, %vars);
+    
+    given(get_parent_command($command_line)) {
+        when("repo") {
+            print "Processing 'repo' Request\n";
+            ($header, $data) = repo_get_commands(get_sub_command($command_line), $user, %vars);
+        }
+        default {
+            print "Not supported Request\n";
+            return (not_supported_message($request_path), "");
+        }
+    }
     
     if ((!defined($data))) {
         $header = not_found_message();
         $data = "";
+    } elsif (!defined($header)) {
+        $header = not_supported_message($request_path);
     } else {
         $header = default_header(length($data), $header);
     }
@@ -248,11 +252,77 @@ sub process_get {
 
 sub process_delete {
     my ($request_path, $user, $pass) = @_;
+    my ($command_line, $command, $vars_line, $header, %vars);
+    #if (authorize_user($user, $pass) ne 200) {
+    #    return (get_auth_message(), "");
+    #}
+    
+    # Here user was already been authorized.
+    ($command_line, $vars_line) = split_address($request_path);
+    %vars = parse_vars($vars_line);
+    
+    given(get_parent_command($command_line)) {
+        when("repo") {
+            print "Processing 'repo' Request\n";
+            $header = repo_delete_commands(get_sub_command($command_line), $user, %vars);
+        }
+        when("user") {
+            print "Processing 'user' Request\n";
+            $header = user_delete_commands(get_sub_command($command_line), $user, %vars);
+        }
+        default {
+            print "Not supported Request\n";
+            return (not_supported_message($request_path), "");
+        }
+    }
+    
+    if ((!defined($header))) {
+        $header = not_supported_message($request_path);
+    } else {
+        $header = default_header(0, $header);
+    }
+    
+    
+    return ($header, "");
     
 }
 
-sub get_content {
-    my ($command, %vars) = @_;
+# Receives request path
+# Returns command and vars string in query path
+sub split_address {
+    my ($request_path) = @_;
+    if (!defined($request_path)) {
+        return;
+    }
+    
+    return split('\?', $request_path);
+}
+# Extracts subcommand from command line
+# Example: from /repo/user/add -> /user/add
+sub get_sub_command {
+    my ($command) = @_;
+    my $pcommand;
+    if (!defined($command)) {
+        return;
+    }
+    $pcommand = get_parent_command($command);
+    $command =~ s/^\/$pcommand//;
+    return $command;
+}
+
+sub get_parent_command {
+    my ($command) = @_;
+    my $pcommand;
+    if (!defined($command)) {
+        return;
+    }
+    my @splitted = split('/', $command);
+    $pcommand = $splitted[1];
+    return $pcommand;
+}
+
+sub repo_get_commands {
+    my ($command, $user, %vars) = @_;
     my $content = "";
     my @tmp_lines;
     my $header = "";
@@ -261,23 +331,34 @@ sub get_content {
     my $filename = $vars{'filename'};
     my $revision = $vars{'revision'};
     
+    if ((! defined($reponame)) || (! defined($filename))) {
+        return;
+    }
     
-    given($command) {
+    if (! exist_user_in_group($user, $reponame)) {
+        return (get_auth_message(), "");
+    }
+    
+    
+    
+    given(get_parent_command($command)) {
         when("diff") {
+            print "Processing 'diff' Request\n";
             @tmp_lines = get_diff($MYCVS_REPO_STORE.'/'.$reponame.$filename, $revision);
             foreach my $line(@tmp_lines) {
                 $content .= $line;
             }
-        }
-        when("checkin") {
-            
+            $header = "";
         }
         when ("checkout") {
+            print "Processing 'checkout' Request\n";
             my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
             ($timestamp, @tmp_lines) = make_checkout($file, $revision);
             
             if (defined($timestamp)) {
-                $header = "Time-Stamp: ".$timestamp;
+                $header = "Time-Stamp: ".$timestamp."\r\n";
+            } else {
+                $header = "";
             }
             
             foreach my $line(@tmp_lines) {
@@ -285,16 +366,133 @@ sub get_content {
             }
         }
         when("revisions") {
+            print "Processing 'revisions' Request\n";
             @tmp_lines = get_revisions($MYCVS_REPO_STORE.'/'.$reponame.$filename);
             foreach my $line(@tmp_lines) {
-                $content .= $line;
+                $content .= $line."\n";
             }
+            $header = "";
+        }
+        when("timestamp") {
+            print "Processing 'timestamp' Request\n";
+            my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
+            $timestamp = get_timestamp($file, $revision);
+            
+            if (defined($timestamp)) {
+                $header = "Time-Stamp: ".$timestamp."\r\n";
+                $content = $header;
+            } else {
+                $header = "";
+            }
+        }
+        default {
+            print "Not supported Request\n";
+            return;
+        }
+    }
+    return ($header, $content);
+}
+
+sub repo_delete_commands {
+    my ($command, $user, %vars) = @_;
+    my $reponame = $vars{'reponame'};
+    my $username = $vars{'username'};
+    my $header;
+    
+       
+    if (! is_user_admin($user)) {
+        return (get_auth_message(), "");
+    }
+    
+    given($command) {
+        when("/del") {
+            print "Processing 'del' Request\n";
+            # Delete Repository
+        }
+        when("/user/del") {
+            print "Processing 'user/del' Request\n";
+            # Revoke user permission on repository
         }
         default {
             return;
         }
     }
-    return ($header, $content);
+    return $header;
+}
+
+sub repo_post_commands {
+    my ($command, $user, $data, %vars) = @_;
+    my $reponame = $vars{'reponame'};
+    my $filename = $vars{'filename'};
+    my $revision = $vars{'revision'};
+    my $header;
+    
+    
+    given($command) {
+        when("/checkin") {
+            print "Processing 'checkin' Request\n";
+            if ((! defined($reponame)) || (! defined($filename))) {
+                return;
+            }
+            if (! exist_user_in_group($user, $reponame)) {
+                return get_auth_message();
+            }
+            my $real_file_path = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
+            
+            if ((is_file_locked($real_file_path)) && ($user ne get_locked_user())) {
+                return file_locked_message($reponame, $filename);
+            }
+            lock_file($real_file_path);
+            
+            save_string_to_new_file($data, $real_file_path);
+            make_checkin($real_file_path);
+            
+            unlock_file($real_file_path);
+            delete_file($real_file_path);
+            $header = "";
+        }
+        when("/add") {
+            print "Processing 'add' Request\n";
+        }
+        when("/user/add") {
+            print "Processing '/user/add' Request\n";
+            my $username = $vars{'username'};
+            my $passhash = $vars{'pass'};
+            my $isAdmin = $vars{'admin'};
+            
+        }
+        when("/unlock") {
+            print "Processing 'unlock' Request\n";
+            
+        }
+        default {
+            print "Not supported Request\n";
+            return;
+        }
+    }
+    
+    return $header;
+}
+
+sub user_post_commands {
+    my ($command, $user, %vars) = @_;
+    my $reponame = $vars{'reponame'};
+    my $filename = $vars{'filename'};
+    my $revision = $vars{'revision'};
+    my $header;
+    
+    
+    return $header;
+}
+sub user_delete_commands {
+    my ($command, $user, %vars) = @_;
+    my $reponame = $vars{'reponame'};
+    my $filename = $vars{'filename'};
+    my $revision = $vars{'revision'};
+    my $header;
+    
+    
+    return $header;
 }
 
 sub authorize_user {

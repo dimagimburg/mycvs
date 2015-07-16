@@ -12,7 +12,8 @@ our @EXPORT = qw(
                 get_revisions format_time_stamp get_file_time set_file_time
                 save_lines_array_to_file read_lines_from_file merge_back_diff_on_file
                 get_revisions get_dir_contents format_time_stamp get_file_time
-                set_file_time
+                set_file_time is_file_locked get_locked_user save_string_to_new_file
+                get_timestamp
                 );
 
 # Checks in file. If first checkin uses function checkin_first.
@@ -60,9 +61,6 @@ sub make_checkout {
     my ($file_path, $revision) = @_;
     my @revisions = get_revisions($file_path);
     my $timestamp; my @merged_file;
-    if (! lock_file($file_path)) {
-        return;
-    }
     
     if (! defined($revision)) {
         # Will get the latest file if available.
@@ -122,7 +120,7 @@ sub get_diff {
         # Temporary save file
         save_lines_array_to_file(\@old_rev_lines, $file_path.'.merged');
         @diff = get_diff_on_two_files($file_path, $file_path.'.merged');
-        unlink $file_path.'.merged';
+        delete_file($file_path.'.merged');
     }
     
     return @diff;
@@ -142,6 +140,13 @@ sub save_lines_array_to_file {
     foreach my $line(@array) {
         print file_handle $line;
     }
+    close(file_handle)
+}
+
+sub save_string_to_new_file {
+    my ($str, $filename) = @_;
+    open(file_handle, ">$filename") or die "Can't save file.\n";
+    print file_handle $str;
     close(file_handle)
 }
 # Merges diff on file. Receives file and diff as array of lines (pass array with \@)
@@ -287,7 +292,7 @@ sub set_file_time {
 
 sub lock_file {
     my ($file_path) = @_;
-    
+        
     return 1;
 }
 
@@ -295,6 +300,46 @@ sub unlock_file {
     my ($file_path) = @_;
     
     return 1;
+}
+
+# Checks if file locked.
+# If locked returns username who locked file.
+sub is_file_locked {
+    my ($file_path) = @_;
+    
+    return 0;
+}
+
+# returns username of user that locked file.
+sub get_locked_user {
+    my ($file_path) = @_;
+    
+    
+}
+
+sub delete_file {
+    my ($file_path) = @_;
+    if (-f $file_path) {
+        unlink $file_path;
+    }
+}
+
+sub get_timestamp {
+    my ($file_path, $revision) = @_;
+    if (!defined($file_path)) {
+        return;
+    }
+    
+    if (!defined($revision)) {
+        $revision = 1;
+    }
+    my $real_file_name = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revision.'.diff';
+    
+    if (! -f $real_file_name) {
+        return;
+    }
+    
+    return get_file_time($real_file_name);
 }
 
 1;
