@@ -396,6 +396,7 @@ sub repo_get_commands {
         when("revisions") {
             print "Processing 'revisions' Request\n";
             @tmp_lines = print_revisions_to_array($MYCVS_REPO_STORE.'/'.$reponame.$filename);
+            
             if (!@tmp_lines) {
                 return;
             }

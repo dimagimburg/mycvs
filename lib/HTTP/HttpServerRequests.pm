@@ -56,8 +56,8 @@ sub send_http_request {
     $uri .= "$command?";
     $uri .= "$vars";
     my $response = $http->request($method, $uri);
-    
-    return $response->{content} if $response->{status} eq 200;
+    print Dumper $response;
+    return ($response->{content}, %{$response->{headers}}) if $response->{status} eq 200;
     die "Requested resourse not Found.\n" if $response->{status} eq 404;
     die "You not Authorized\n" if $response->{status} eq 401;
     die "Action Forbidden. ".$response->{content}."\n" if $response->{status} eq 403;
@@ -86,7 +86,7 @@ sub convert_response_to_array {
 
 sub get_remote_revisions {
     my ($file_path) = @_;
-    my ($vars, $response, @revisions);
+    my ($vars, $response, @revisions, %headers);
     
     if (! check_http_prerequisites($file_path)) {
         return;
@@ -98,7 +98,7 @@ sub get_remote_revisions {
     $file_path =~ s/${reporoot}//;
     $vars = "reponame=".$options{reponame}."&filename=".$file_path;
     
-    $response = send_http_request('GET',$get_commands{get_all_revisions}, $vars);
+    ($response, %headers) = send_http_request('GET',$get_commands{get_all_revisions}, $vars);
     @revisions = convert_response_to_array($response);
     
     return @revisions;
@@ -106,7 +106,7 @@ sub get_remote_revisions {
 
 sub get_remote_plain_diff {
     my ($file_path, $revision) = @_;
-    my ($vars, $response, $temp_file_path, $local_file_path, @file_lines);
+    my ($vars, $response, $temp_file_path, $local_file_path, @file_lines, %headers);
     
     if (! check_http_prerequisites($file_path)) {
         return;
@@ -123,7 +123,7 @@ sub get_remote_plain_diff {
         $vars .= "&revision=$revision";
     }
     
-    $response = send_http_request('GET',$get_commands{get_revision}, $vars);
+    ($response, %headers) = send_http_request('GET',$get_commands{get_revision}, $vars);
     return if ! defined($response);
     
     save_string_to_new_file($response, $temp_file_path);
@@ -132,7 +132,30 @@ sub get_remote_plain_diff {
     return get_diff_on_two_files($temp_file_path, $local_file_path);
 }
 
-
+sub get_remote_checkout {
+    my ($file_path, $revision) = @_;
+    my ($vars, $response, $temp_file_path, $local_file_path, @file_lines, %headers);
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    my %options = parse_config_line($file_path);
+    my $reporoot = get_repo_root($file_path);
+    
+    $local_file_path = $file_path;
+    $temp_file_path = $file_path.'.remote_copy';
+    $file_path =~ s/${reporoot}//;
+    $vars = "reponame=".$options{reponame}."&filename=".$file_path;
+    
+    if (defined($revision)) {
+        $vars .= "&revision=$revision";
+    }
+    ($response, %headers) = send_http_request('GET',$get_commands{checkout}, $vars);
+    return if ! defined($response);
+    
+    save_string_to_new_file($response, $temp_file_path);
+    set_file_time($temp_file_path, %headers{'time-stamp'})
+}
 
 
 

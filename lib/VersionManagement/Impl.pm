@@ -259,8 +259,7 @@ sub get_revisions {
     my (@files, @revisions);
     @revisions = ();
     
-    @files = get_dir_contents($file_dir_name, $file_name);
-                #or die "No revisions for the whole folder. Checkin something.\n";
+    @files = get_dir_contents($file_dir_name, $file_name.'.');
     
     foreach my $file(@files) {
         next if -d $file; # Skip if we got dir by mistake.
@@ -286,7 +285,7 @@ sub get_dir_contents {
     
     opendir(dir_handle, $dir);
     
-    @files = grep {/^${expr}/} readdir dir_handle;
+    @files = grep {/^\Q${expr}\E/} readdir dir_handle;
     
     closedir(dir_handle);
     return @files;

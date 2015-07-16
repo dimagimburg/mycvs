@@ -25,9 +25,11 @@ dima 14.7
 # Web Server API
 
 * GET:
-   - /repo/diff?reponame=<repo_name>&filename=<repo_file_path>&revision=<rev#>
+   - /repo/revision?reponame=<repo_name>&filename=<repo_file_path>&revision=<rev#>
    - /repo/checkout?reponame=<repo_name>&filename=<repo_file_path>&revision=<revision#>
-   - /repo/revisions
+   - /repo/revisions?reponame=<repo_name>&filename=<repo_file_path>
+   - /repo/timestamp?reponame=<repo_name>&filename=<repo_file_path>&revision=<revision#>
+   - /repo/filelist?reponame=<reponame>
 
 * POST:
    - /repo/checkin?reponame=<repo_name>&filename=<repo_file_path>
@@ -36,8 +38,8 @@ dima 14.7
    - /repo/ulock?filename=<repo_file_path>
 
    - /user/add?username=<username>&pass=<hash>&admin=<true/false>
-   - /user/alter?username=<username>
 * DELETE:
-   - /user/rem?username=<username>
-   - /repo/user/del?reponame=<reponame>
+   - /repo/del?reponame=<repo_name>
+   - /user/del?username=<username>
+   - /repo/user/del?reponame=<reponame>&username=<username>
 

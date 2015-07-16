@@ -55,7 +55,7 @@ sub checkin {
 }
 
 sub checkout {
-    VersionManagement::Commands::new_checkout(shift,shift);
+    VersionManagement::Commands::checkout_file(shift,shift);
 }
 
 sub user {

@@ -29,16 +29,22 @@ sub checkin_file {
 
 # Checkouts file from repository at given revision.
 # Prints error if file not in repository or revision not found.
-# If revision not defined users last revision
+# If revision not defined uses last revision
 sub checkout_file {
     my ($file_path, $revision) = @_;
-    die "'$file_path' $!.\n" if (! -f $file_path);
-    my ($timestamp, @lines_array) = make_checkout($file_path, $revision);
-    if ((!defined($timestamp)) || (@lines_array)) {
-        die "Revision: '$revision' does not exists.\n";
+    die "You must provide at least filename to this command.\n" if ! defined $file_path;
+    print "Local file not found. Trying to get from remote.\n" if ! -f $file_path;
+    
+    if (-f $file_path) {
+        #code
     }
-    save_lines_array_to_file(\@lines_array, $file_path);
-    set_file_time($file_path, $timestamp);
+    
+    #my ($timestamp, @lines_array) = make_checkout($file_path, $revision);
+    #if ((!defined($timestamp)) || (@lines_array)) {
+    #    die "Revision: '$revision' does not exists.\n";
+    #}
+    #save_lines_array_to_file(\@lines_array, $file_path);
+    #set_file_time($file_path, $timestamp);
 }
 
 
