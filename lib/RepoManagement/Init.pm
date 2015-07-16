@@ -19,6 +19,7 @@ use RepoManagement::Configuration qw(
                     $MYCVS_GLOBAL_BASEDIR $MYCVS_GLOBAL_CONFIG_LOC
                     $MYCVS_USERS_DB $MYCVS_GROUPS_DB $MYCVS_DB_FOLDER
                     $MYCVS_HTTP_PORT $MYCVS_REPO_STORE $MYCVS_CONFIG_NAME
+                    $MYCVS_ADMINS_DB
                     );
 use UserManagement::Impl;
 use VersionManagement::Impl;
@@ -45,10 +46,11 @@ sub init{
 
 # Create global dir tree
 sub init_global {
-    # Create global configuration dir that will hold all the db files and sessions
+    # Create global configuration dir that will hold all the db files
     check_and_create_dir($MYCVS_GLOBAL_BASEDIR);
     init_users_db();
-    init_grops_db();
+    init_groups_db();
+    init_admins_db();
 }
 
 # Initialize .mycvs store in new directory.
@@ -119,6 +121,7 @@ sub check_and_create_dir {
     my ($dir) = @_;
     if (defined("$dir") && $dir ne "") {
         if (! -e "$dir") {
+            print "$dir not found. Creating....";
             make_path($dir) or die "Couldn't create dir '$dir'. Please verify that directory is writable.\n";
         }
     } else {
@@ -140,6 +143,12 @@ sub init_users_db {
 sub init_groups_db {
     if (! -f $MYCVS_GROUPS_DB) {
         create_file($MYCVS_GROUPS_DB);
+    }
+}
+
+sub init_admins_db {
+        if (! -f $MYCVS_ADMINS_DB) {
+        create_file($MYCVS_ADMINS_DB);
     }
 }
 

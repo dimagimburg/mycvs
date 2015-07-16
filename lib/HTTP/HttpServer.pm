@@ -17,6 +17,7 @@ our @EXPORT = qw(main);
 # Local imports
 use lib qw(../);
 use HTTP::HttpServerImpl;
+use RepoManagement::Init;
 use RepoManagement::Configuration qw($MYCVS_HTTP_PORT);
 
 sub start_server {
@@ -74,13 +75,20 @@ sub start_server {
 
 sub main {
     my ($action) = @_;
-    if (!defined($action)) {
-        die "Supported commans: [start]\n"
-    } elsif ($action eq "start") {
-        start_server(HTTP::HttpServerImpl::new('http', $MYCVS_HTTP_PORT));
-    } else {
-        die "Unknown command.\n";
+    
+    given($action) {
+        when("start") {
+            check_config();
+            start_server(HTTP::HttpServerImpl::new('http', $MYCVS_HTTP_PORT));
+        }
+        default {
+             die "Supported commans: [start]\n"
+        }
     }
+}
+
+sub check_config {
+    init_global();
 }
 
 1;

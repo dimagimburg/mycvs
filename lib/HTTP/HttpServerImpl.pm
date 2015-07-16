@@ -179,9 +179,9 @@ sub not_found_message {
 sub process_post {
     my ($request_path, $user, $pass, $data) = @_;
     my ($command_line, $command, $vars_line, $header, %vars);
-    #if (authorize_user($user, $pass) ne 200) {
-    #    return (get_auth_message(), "");
-    #}
+    if (authorize_user($user, $pass) ne 200) {
+        return (get_auth_message(), "");
+    }
     
     # Here user was already been authorized.
     ($command_line, $vars_line) = split_address($request_path);
@@ -218,9 +218,10 @@ sub process_post {
 sub process_get {
     my ($request_path, $user, $pass) = @_;
     my ($command_line, $command, $vars_line, $data, $header, %vars);
-    #if (authorize_user($user, $pass) ne 200) {
-    #    return (get_auth_message(), "");
-    #}
+    
+    if (authorize_user($user, $pass) ne 200) {
+        return (get_auth_message(), "");
+    }
     
     # Here user was already been authorized.
     ($command_line, $vars_line) = split_address($request_path);
@@ -253,9 +254,9 @@ sub process_get {
 sub process_delete {
     my ($request_path, $user, $pass) = @_;
     my ($command_line, $command, $vars_line, $header, %vars);
-    #if (authorize_user($user, $pass) ne 200) {
-    #    return (get_auth_message(), "");
-    #}
+    if (authorize_user($user, $pass) ne 200) {
+        return (get_auth_message(), "");
+    }
     
     # Here user was already been authorized.
     ($command_line, $vars_line) = split_address($request_path);
@@ -533,7 +534,8 @@ sub authorize_user {
     if ((! defined($user)) || (! defined($password))) {
         return 401;
     }
-    
+    chomp $password;
+    chomp $user;
     if ((! exists_user($user)) || (generate_pass_hash($password) ne get_pass_hash($user))) {
         return 401;
     }

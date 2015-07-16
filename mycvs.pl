@@ -107,7 +107,7 @@ sub config {
 
 sub usage {
     print "\n    USAGE:\n";
-    print "    $0 serverinit <user> <password>      - initializing Server Configuration, with ADMIN user and password.\n";
+    print "    $0 server                            - Server Configuration.\n";
     print "    $0 clientconfig                      - initializing local repository.\n";
     print "    $0 checkin <filename>                - add/checking file to repository.\n";
     print "    $0 checkout <filename>               - checkout file from repository.(Overwrites)\n";

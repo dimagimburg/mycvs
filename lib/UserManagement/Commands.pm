@@ -11,7 +11,7 @@ use Digest::MD5 qw(md5_hex);
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-                login_impl logout_impl add_user list_users
+                login_impl logout_impl add_user print_users
                 add_user_to_group rem_user_from_group list_user_groups
                 list_group_members list_groups group_add group_rem
                 );
@@ -20,25 +20,44 @@ our @EXPORT = qw(
 use lib qw(../);
 use UserManagement::Impl;
 
-# Interactive login implementation.
-sub login_impl {
-    my ($user) = @_;
-}
-
-# Interactive logout implementation.
-# If !defined($user) logout current user. $ENV{USER}
-# else print that there no logged in users
-sub logout_impl {
-    my ($user) = @_;
-}
 # Interactive user add
 sub add_user {
     my ($user_name,$password) = @_;
+    if (!defined($user_name)) {
+        die "You should enter at least username to add.\n"
+    }
+    if (!defined($password)) {
+        while (1) {
+            print "Please enter password: ";
+            $password = <STDIN>;
+            chomp $password;
+            last if $password ne "";
+        }
+    }
+    print "Is this user admin?[y/n] (n - default) ";
+    my $answer = <STDIN>;
+    chomp $answer;
     UserManagement::Impl::create_user_record($user_name,$password);
+    if ($answer eq "y") {
+        if (create_admin_user($user_name)) {
+            print "Successfully promoted user to be ADMIN.\n";
+        } else {
+            print "User already promoted to be admin.\n";
+        }
+    }
+    
+    
 }
 # Simply prints global user list
-sub list_users {
-    UserManagement::Impl::list_users();
+sub print_users {
+    my @userlist = list_users();
+    if (!@userlist) {
+        die "User's DB is empty\n";
+    }
+    
+    foreach my $line(@userlist) {
+        print "$line\n";
+    }
 }
 # Interactively add user to group
 sub add_user_to_group {

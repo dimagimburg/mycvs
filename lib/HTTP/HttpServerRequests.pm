@@ -58,6 +58,9 @@ sub send_http_request {
     my $response = $http->request($method, $uri);
     #print Dumper $response;
     return $response->{content} if $response->{status} eq 200;
+    die "You not Authorized\n" if $response->{status} eq 401;
+    die "Action Forbidden. ".$response->{content}."\n" if $response->{status} eq 403;
+    die "Not Implemented. ".$response->{content}."\n" if $response->{status} eq 501;
 }
 
 sub check_http_prerequisites {
@@ -98,6 +101,8 @@ sub get_remote_revisions {
     
     return @revisions;
 }
+
+
 
 
 

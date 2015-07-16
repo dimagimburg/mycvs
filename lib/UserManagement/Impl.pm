@@ -22,18 +22,24 @@ our @EXPORT = qw(
                 remove_group change_pass get_pass_hash login_user
                 logout_user get_session exists_user generate_pass_hash
                 exist_user_in_group is_user_admin create_admin_user
+                list_users create_admin_user
                 );
                 
 # Internal libs
 use lib qw(../);
-use RepoManagement::Configuration qw($MYCVS_GLOBAL_BASEDIR $MYCVS_USERS_DB $MYCVS_GROUPS_DB);
+use RepoManagement::Configuration qw(
+                                $MYCVS_GLOBAL_BASEDIR $MYCVS_USERS_DB $MYCVS_GROUPS_DB
+                                $MYCVS_ADMINS_DB
+                                );
+use VersionManagement::Impl;
 
 ############################# USERS ###############################
 
 # Creates user record in DB
 sub create_user_record {
-    my ($user_name, $pass_hash) = @_;
-    $pass_hash = generate_pass_hash($pass_hash);
+    my ($user_name, $pass) = @_;
+    my $pass_hash = generate_pass_hash($pass);
+    
 
     if(exists_users_db_file()){
         # file user.db exists
@@ -82,14 +88,9 @@ sub list_users {
         $usernames[$index] = $row_splited[0];
         $index++;
     }
-
-    @usernames = sort(@usernames);
-
-    foreach $username (@usernames){
-        print $username."\n";
-    }
-
     close($fh);
+    
+    return sort(@usernames);
 }
 
 # returns true if user already exists in users.db else false
@@ -274,25 +275,6 @@ sub generate_pass_hash {
     }
 }
 
-# Make user login to the system. Gets user and password.
-# Creates session file under $RepoManagement::Configuration::MYCVS_SESSIONS_DB
-# Session filename: username
-# Contents: pc_name:session_id
-# if file not exists. If file exists adds session line if new session.
-sub login_user {
-    my ($user_name, $pass) = @_;
-}
-
-# Removes entry in session file or if last session removes file.
-sub logout_user {
-    my ($user) = @_;
-}
-
-# Returns session id of the user specified if found from session file.
-sub get_session {
-    my ($user) = @_;
-    
-}
 
 ############################### GLOBAL ##################################
 
@@ -333,15 +315,34 @@ sub exist_user_in_group {
 # Will check if user is admin user
 sub is_user_admin {
     my ($username) = @_;
-    
-    
+    my @admins = list_admin_users();
+    foreach my $admin(@admins) {
+        if ($admin eq $username) {
+            return 0;
+        }
+    }
     return 1;
 }
 
 sub create_admin_user {
-    my ($username, $pass_hash) = @_;
+    my ($username) = @_;
+    use Data::Dumper;
+    my @admins = list_admin_users();
     
-    
+    if (!is_user_admin($username)) {
+        $admins[@admins] = "$username\n";
+        save_lines_array_to_file(\@admins, $MYCVS_ADMINS_DB);
+        return 1;
+    }
+    return 0;
+}
+
+sub list_admin_users {
+    if (-f $MYCVS_ADMINS_DB) {
+        return;
+    }
+    my @lines = read_lines_from_file($MYCVS_ADMINS_DB);
+    return split(' ', @lines);
 }
 
 
