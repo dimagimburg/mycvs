@@ -38,6 +38,7 @@ given(shift(@ARGV)) {
     when ('logout') { logout(shift(@ARGV)); }
     when ('revisions') { get_revisions(shift(@ARGV)); }
     when ('server') { http_server(shift(@ARGV)); }
+    when ('clientconfig') {config();}
     default { usage(); } 
 }
 
@@ -54,7 +55,7 @@ sub checkin {
 }
 
 sub checkout {
-    VersionManagement::Commands::checkout_file(shift,shift);
+    VersionManagement::Commands::new_checkout(shift,shift);
 }
 
 sub user {
@@ -100,9 +101,14 @@ sub http_server {
     HTTP::HttpServer::main(shift);
 }
 
+sub config {
+    RepoManagement::Commands::create_user_config();
+}
+
 sub usage {
     print "\n    USAGE:\n";
-    print "    $0 init <user> <password>            - initializing local repository, with user and password.\n";
+    print "    $0 serverinit <user> <password>      - initializing Server Configuration, with ADMIN user and password.\n";
+    print "    $0 clientconfig                      - initializing local repository.\n";
     print "    $0 checkin <filename>                - add/checking file to repository.\n";
     print "    $0 checkout <filename>               - checkout file from repository.(Overwrites)\n";
     print "    $0 checkout -r <revision> <filename> - checkout file from repository at specific revision.(Overwrites)\n";
@@ -119,6 +125,4 @@ sub usage {
     print "    $0 user group list <user>            - List user's groups.\n";
     print "    $0 user group add <user> <group>     - Add user to group.\n";
     print "    $0 user group rem <user> <group>     - Remove user from group.\n";
-    print "    $0 login <user>                      - Login to system.\n";
-    print "    $0 logout <user>                     - Logout from system.\n";
 }

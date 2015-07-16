@@ -13,6 +13,7 @@ our @EXPORT = qw(
 # Internal libs
 use lib qw(../);
 use VersionManagement::Impl;
+use HTTP::Tiny;
 
 # Checks in file. If first checkin uses function checkin_first.
 # also creates $filename.rev_num.diff. File will include reverse diff of file
@@ -37,6 +38,8 @@ sub checkout_file {
     save_lines_array_to_file(\@lines_array, $file_path);
     set_file_time($file_path, $timestamp);
 }
+
+
 
 # Prints diff in prety form at given revision
 # If revision not defined users last revision.

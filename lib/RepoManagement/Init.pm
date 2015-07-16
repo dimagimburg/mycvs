@@ -8,14 +8,21 @@ use File::Basename;
 use Cwd;
 use Exporter qw(import);
 our @ISA = qw(Exporter);
-our @EXPORT = qw(init_global init_local);
+our @EXPORT = qw(
+                init_global init_local parse_config_line save_client_config
+                );
 
 # Internal libs
 use lib qw(../);
-use RepoManagement::Configuration;
+use RepoManagement::Configuration qw(
+                    $MYCVS_GLOBAL_BASEDIR $MYCVS_GLOBAL_CONFIG_LOC
+                    $MYCVS_USERS_DB $MYCVS_GROUPS_DB $MYCVS_DB_FOLDER
+                    $MYCVS_HTTP_PORT $MYCVS_REPO_STORE $MYCVS_CONFIG_NAME
+                    );
 use UserManagement::Impl;
+use VersionManagement::Impl;
 
-# Initialize a new repo with username and password for admin
+# Initialize a new Server config with username and password for admin
 sub init{
     my($username,$password) = @_;
 
@@ -38,12 +45,9 @@ sub init{
 # Create global dir tree
 sub init_global {
     # Create global configuration dir that will hold all the db files and sessions
-    check_and_create_dir($RepoManagement::Configuration::MYCVS_GLOBAL_BASEDIR);
-    # Create sessions directory that will hold user session files
-    check_and_create_dir($RepoManagement::Configuration::MYCVS_SESSIONS_DB);
+    check_and_create_dir($MYCVS_GLOBAL_BASEDIR);
     init_users_db();
     init_grops_db();
-    init_repos_db();
 }
 
 # Initialize .mycvs store in new directory.
@@ -51,7 +55,61 @@ sub init_global {
 sub init_local {
     my ($dir) = @_;
     check_and_create_dir($dir.'/.mycvs');
+    
 }
+
+
+sub save_client_config {
+    my ($host, $port, $reponame, $user, $pass, $dir) = @_;
+    check_and_create_dir("$dir/.mycvs");
+    save_string_to_new_file("$host:$port:$reponame:$user:$pass", "$dir/.mycvs/$MYCVS_CONFIG_NAME")
+}
+
+# Tries to find reporoot.
+sub get_repo_root {
+    my ($file_path) = @_;
+    if (! -f $file_path) {
+        return;
+    }
+    
+    my $dir = dirname($file_path);
+    my $reporoot;
+    
+    while ($dir ne "/") {
+        if (-f "$dir/.mycvs/$MYCVS_CONFIG_NAME") {
+            $reporoot = $dir;
+        }
+        $dir = dirname($dir);
+    }
+    
+    return $reporoot;
+}
+# Receives file_path and tries to find reporootdir
+# to read config from. If config file exists
+# returns array of config "$host, $port, $reponame, $user, $pass"
+sub parse_config_line {
+    my ($file_path) = @_;
+    my $reporoot = get_repo_root($file_path);
+    my (@lines, @splitted, %options);
+    if (! defined($reporoot)) {
+        return;
+    }
+    @lines = read_lines_from_file("$reporoot/.mycvs/$MYCVS_CONFIG_NAME");
+    if (@lines) {
+        @splitted = split(':', $lines[0]);
+        $options{host}     = $splitted[0];
+        $options{port}     = $splitted[1];
+        $options{reponame} = $splitted[2];
+        $options{user}     = $splitted[3];
+        $options{pass}     = $splitted[4];
+        
+        return %options;
+    } else {
+        return;
+    }
+}
+
+ 
 
 sub check_and_create_dir {
     my ($dir) = @_;
@@ -67,17 +125,8 @@ sub check_and_create_dir {
 # File structure is like /etc/passwd
 # username:password_hash
 sub init_users_db {
-    if (! -f $RepoManagement::Configuration::MYCVS_USERS_DB) {
-        create_file($RepoManagement::Configuration::MYCVS_REPOS_DB);
-    }
-}
-
-# File structure is like /etc/groups
-# root_dir:admin_group1:users_group1
-# root_dir:admin_group2:users_group2
-sub init_repos_db {
-    if (! -f $RepoManagement::Configuration::MYCVS_REPOS_DB) {
-        create_file($RepoManagement::Configuration::MYCVS_REPOS_DB);
+    if (! -f $MYCVS_USERS_DB) {
+        create_file($MYCVS_USERS_DB);
     }
 }
 
@@ -85,8 +134,8 @@ sub init_repos_db {
 # group1:user1,user2
 # group2:user3,user4
 sub init_groups_db {
-    if (! -f $RepoManagement::Configuration::MYCVS_GROUPS_DB) {
-        create_file($RepoManagement::Configuration::MYCVS_GROUPS_DB);
+    if (! -f $MYCVS_GROUPS_DB) {
+        create_file($MYCVS_GROUPS_DB);
     }
 }
 

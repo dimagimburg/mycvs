@@ -4,6 +4,7 @@ use strict; use warnings;
 
 # Perl libs & vars
 use File::Basename;
+use File::Find;
 use File::Copy qw(copy);
 use Exporter qw(import);
 our @ISA = qw(Exporter);
@@ -13,7 +14,8 @@ our @EXPORT = qw(
                 save_lines_array_to_file read_lines_from_file merge_back_diff_on_file
                 get_revisions get_dir_contents format_time_stamp get_file_time
                 set_file_time is_file_locked get_locked_user save_string_to_new_file
-                get_timestamp
+                get_timestamp get_merged_plain_file lock_file unlock_file is_file_locked
+                delete_file get_dir_contents_recur
                 );
 
 # Checks in file. If first checkin uses function checkin_first.
@@ -53,6 +55,22 @@ sub make_checkin {
     set_file_time($next_revision_file,get_file_time($file_path));
 }
 
+# Returns merged file lines array at specific revision
+sub get_merged_plain_file {
+    my ($file_path, $revision) = @_;
+    my @lines = ();
+    my $timestamp = 0;
+    if (! defined($file_path)) {
+        return;
+    }
+    ($timestamp, @lines) = make_checkout($file_path, $revision);
+    #@lines = read_lines_from_file($file_path);
+    #$timestamp = get_file_time($file_path);
+    unlink $file_path;
+    
+    return ($timestamp, @lines);
+}
+
 # Checkouts file from repository at given revision.
 # Prints error if file not in repository or revision not found.
 # If revision not defined users last revision
@@ -80,6 +98,7 @@ sub make_checkout {
         #save_lines_array_to_file(\@merged_file, $file_path);
         #$timestamp = get_file_time($given_diff);
         #set_file_time($file_path, get_file_time($given_diff));
+        $timestamp = get_file_time($given_diff);
     } else {
         return;
     }
@@ -269,9 +288,32 @@ sub get_dir_contents {
     return @files;
 }
 
+sub get_dir_contents_recur {
+    my ($dirname) = @_;
+    my $files= [];
+    my $wanted = sub { _wanted($files, $dirname) };
+    if (! -d $dirname) {
+        return;
+    }
+    
+    find($wanted, $dirname);
+    return @$files;
+}
+
+sub _wanted {
+   return if ! -e;
+   my ($files, $dir) = @_;
+
+   $File::Find::name =~ s/^${dir}//;
+   return if $File::Find::name eq "";
+   return if $File::Find::name =~ /lock/;
+
+   push( @$files, $File::Find::name ) if $File::Find::name!~ /\.mycvs/;
+}
+
+
 sub format_time_stamp {
     my ($timestamp) = @_;
-    #print $timestamp;
     my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($timestamp);
     my $pretty_time = sprintf("%02d-%02d-%02d_%02d-%s-%d",
@@ -291,30 +333,66 @@ sub set_file_time {
 }
 
 sub lock_file {
-    my ($file_path) = @_;
-        
-    return 1;
+    my ($file_path, $user) = @_;
+    my $lockfile = $file_path.'.lock.'.$user;
+    if (is_file_locked($file_path)) {
+        return 0;
+    } else {
+        save_string_to_new_file("", $lockfile);
+        return 1;
+    }
 }
 
 sub unlock_file {
     my ($file_path) = @_;
-    
-    return 1;
+    delete_file($file_path);
 }
 
 # Checks if file locked.
-# If locked returns username who locked file.
 sub is_file_locked {
     my ($file_path) = @_;
+    if (defined(get_lock_file($file_path))) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub get_lock_file {
+    my ($filename) = @_;
+    my @files = ();
+    my $dir = dirname($filename);
+    $filename = basename($filename);
     
-    return 0;
+    
+    if (! -d $dir) {
+        return; # Return undef
+    }
+    
+    opendir(dir_handle, $dir);
+    
+    @files = grep {/${filename}\.lock/} readdir dir_handle;
+    
+    closedir(dir_handle);
+    if (@files) {
+        return $files[0];
+    } else {
+        return;
+    }
 }
 
 # returns username of user that locked file.
 sub get_locked_user {
     my ($file_path) = @_;
+    my $username;
     
-    
+    if (is_file_locked($file_path)) {
+        my $lockfile = get_lock_file($file_path);
+        $username = (split('\.', $lockfile))[2];
+        return $username;
+    } else {
+        return;
+    }
 }
 
 sub delete_file {

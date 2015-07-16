@@ -160,8 +160,8 @@ sub not_supported_message {
 }
 
 sub file_locked_message {
-    my ($repo, $file_path) = @_;
-    my $body = "Given file: $file_path in Repo: $repo locked by different user.\r\n";
+    my ($repo, $file_path, $user) = @_;
+    my $body = "Given file: $file_path in Repo: $repo locked by user: $user.\r\n";
     my $header = "HTTP/1.0 403 Forbidden\nContent-Type: text/plain\r\n";
     my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
     my $message = $header.$content_len.$body;
@@ -197,7 +197,7 @@ sub process_post {
             $header = user_post_commands(get_sub_command($command_line), $user, %vars);
         }
         default {
-            print "Not supported Request\n";
+            print "'".$command_line."' Not supported Request\n";
             return (not_supported_message($request_path), "");
         }
     }
@@ -232,21 +232,21 @@ sub process_get {
             ($header, $data) = repo_get_commands(get_sub_command($command_line), $user, %vars);
         }
         default {
-            print "Not supported Request\n";
+            print "'".$command_line."' Not supported Request\n";
             return (not_supported_message($request_path), "");
         }
     }
     
-    if ((!defined($data))) {
+    if (!defined($data)) {
         $header = not_found_message();
         $data = "";
     } elsif (!defined($header)) {
         $header = not_supported_message($request_path);
+    } elsif (defined($header) && !defined($data)) {
+        $data = "";
     } else {
         $header = default_header(length($data), $header);
     }
-    
-    
     return ($header, $data);
 }
 
@@ -271,7 +271,7 @@ sub process_delete {
             $header = user_delete_commands(get_sub_command($command_line), $user, %vars);
         }
         default {
-            print "Not supported Request\n";
+            print "'".get_parent_command($command_line)."' Not supported Request\n";
             return (not_supported_message($request_path), "");
         }
     }
@@ -342,17 +342,34 @@ sub repo_get_commands {
     
     
     given(get_parent_command($command)) {
-        when("diff") {
+        when("revision") {
             print "Processing 'diff' Request\n";
-            @tmp_lines = get_diff($MYCVS_REPO_STORE.'/'.$reponame.$filename, $revision);
+            ($timestamp, @tmp_lines) = get_merged_plain_file($MYCVS_REPO_STORE.'/'.$reponame.$filename, $revision);
+            
+            if (defined($timestamp)) {
+                $header = "Time-Stamp: ".$timestamp."\r\n";
+            } else {
+                $header = "";
+            }
+            
             foreach my $line(@tmp_lines) {
                 $content .= $line;
             }
-            $header = "";
         }
         when ("checkout") {
             print "Processing 'checkout' Request\n";
             my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
+            
+            if (! -f $file) {
+                return;
+            }
+            
+            if (!is_file_locked($file)) {
+                lock_file($file, $user);
+            } elsif (get_locked_user($file) ne $user) {
+                return (file_locked_message($reponame, $filename, $user), "");
+            }
+            
             ($timestamp, @tmp_lines) = make_checkout($file, $revision);
             
             if (defined($timestamp)) {
@@ -382,11 +399,22 @@ sub repo_get_commands {
                 $header = "Time-Stamp: ".$timestamp."\r\n";
                 $content = $header;
             } else {
-                $header = "";
+                return;
             }
         }
+        when("filelist") {
+            print "Processing 'filelist' Request\n";
+            my @tmp_lines = get_dir_contents_recur($MYCVS_REPO_STORE.'/'.$reponame);
+            use Data::Dumper;
+            print Dumper @tmp_lines;
+            foreach my $line(@tmp_lines) {
+                print "OK";
+                $content .= $line."\n";
+            }
+            $header = "";
+        }
         default {
-            print "Not supported Request\n";
+            print "'".$command."' not supported Request\n";
             return;
         }
     }
@@ -414,6 +442,7 @@ sub repo_delete_commands {
             # Revoke user permission on repository
         }
         default {
+            print "'".$command."' Not supported Request\n";
             return;
         }
     }
@@ -442,7 +471,6 @@ sub repo_post_commands {
             if ((is_file_locked($real_file_path)) && ($user ne get_locked_user())) {
                 return file_locked_message($reponame, $filename);
             }
-            lock_file($real_file_path);
             
             save_string_to_new_file($data, $real_file_path);
             make_checkin($real_file_path);
@@ -466,7 +494,7 @@ sub repo_post_commands {
             
         }
         default {
-            print "Not supported Request\n";
+            print "'".$command."' Not supported Request\n";
             return;
         }
     }
@@ -511,6 +539,10 @@ sub authorize_user {
 sub parse_vars {
     my ($string_variables) = @_;
     my %vars = ();
+    if (!defined($string_variables)) {
+        return;
+    }
+    
     my @splitted = split('&', $string_variables);
     foreach my $line(@splitted) {
         my @sv = split('=', $line);

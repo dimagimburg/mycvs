@@ -10,6 +10,7 @@ use strict; use warnings;
 
 # Perl libs & vars
 use Exporter qw(import);
+use Cwd;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 create_repo delete_repo get_repositories get_repo_root_of_file
@@ -19,6 +20,7 @@ our @EXPORT = qw(
 use lib qw(../);
 use UserManagement::Commands;
 use RepoManagement::Configuration;
+use RepoManagement::Init;
 
 # Create repository entry in DB
 sub create_repo {
@@ -51,7 +53,12 @@ sub print_repositories {
 sub get_repo_root_of_file {
     my ($file_path) = @_;
     # Return root_dir of repository that given file belongs (hould be full file path)
-    
+    my $reporoot = get_repo_root($file_path);
+    if (! defined($reporoot)) {
+        return;
+    } else {
+        return $reporoot;
+    }
 }
 
 # Creates repository's admin group
@@ -64,6 +71,38 @@ sub create_users_repo_group {
     my ($repo_root_dir) = @_;
 }
 
+sub create_user_config {
+    my $current_dir = getcwd();
+    my ($host, $port, $reponame, $user, $pass);
+    my $menu_flag = 1;
+    my $answer;
+    while ($menu_flag) {
+        print "Please enter Repository server: "; $host = <STDIN>; chomp $host;
+        print "Please enter Port number: (default 8080)"; $port = <STDIN>; chomp $port;
+        print "Please enter Repository name: "; $reponame = <STDIN>; chomp $reponame;
+        print "Please enter your username: "; $user = <STDIN>; chomp $user;
+        print "Please enter your repo password: "; $pass = <STDIN>; chomp $pass;
+        
+        if (!defined($port) || $port eq "" ) {
+        $port = 8080;
+        }
+        
+        print "\n\nYou entered:\n\n";
+        print "======================\n";
+        print "Server:   $host:$port\n";
+        print "RepoName: $reponame\n";
+        print "UserName: $user\n";
+        print "Password: $pass\n";
+        print "Is it correct?[y/n] (y - default): ";
+        
+        $answer = <STDIN>; chomp $answer;
+        if ($answer !~ '[Nn]') {
+            $menu_flag = 0;
+        }
+    }
+
+    save_client_config($host, $port, $reponame, $user, $pass, $current_dir);
+}
 
 
 1;
