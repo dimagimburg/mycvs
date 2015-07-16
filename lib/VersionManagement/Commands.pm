@@ -5,6 +5,8 @@ use strict; use warnings;
 # Perl libs & vars
 use File::Basename;
 use Exporter qw(import);
+use Cwd;
+use Cwd qw(realpath);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 checkin_file checkout_file print_revision_diff
@@ -13,7 +15,7 @@ our @EXPORT = qw(
 # Internal libs
 use lib qw(../);
 use VersionManagement::Impl;
-use HTTP::Tiny;
+use HTTP::HttpServerRequests;
 
 # Checks in file. If first checkin uses function checkin_first.
 # also creates $filename.rev_num.diff. File will include reverse diff of file
@@ -64,8 +66,9 @@ sub print_revision_diff  {
 # Revision: <>, TimeStamp: <>
 sub print_revisions {
     my ($file_path) = @_;
-    my @revisions = get_revisions($file_path);
+    my @revisions = get_remote_revisions(realpath($file_path));
     my $index = 0;
+
     
     if (@revisions) {
         print "Revisions for the file: '$file_path':\n";
@@ -73,6 +76,10 @@ sub print_revisions {
         foreach(@revisions) {
             my $diff_file = dirname($file_path)."/.mycvs/".basename($file_path).".$_.diff";
             my $timestamp = format_time_stamp(get_file_time($diff_file));
+            if (!defined($timestamp)) {
+                $timestamp = 0;
+            }
+            
             printf ("Revision: %4d, Timestamp: %s", $_, $timestamp) if defined($_);
             if ($index <=> $#revisions) {
                 print "\n";

@@ -343,7 +343,7 @@ sub repo_get_commands {
     
     given(get_parent_command($command)) {
         when("revision") {
-            print "Processing 'diff' Request\n";
+            print "Processing 'revision' Request\n";
             ($timestamp, @tmp_lines) = get_merged_plain_file($MYCVS_REPO_STORE.'/'.$reponame.$filename, $revision);
             
             if (defined($timestamp)) {
@@ -385,6 +385,10 @@ sub repo_get_commands {
         when("revisions") {
             print "Processing 'revisions' Request\n";
             @tmp_lines = get_revisions($MYCVS_REPO_STORE.'/'.$reponame.$filename);
+            if (!@tmp_lines) {
+                return;
+            }
+            
             foreach my $line(@tmp_lines) {
                 $content .= $line."\n";
             }

@@ -249,7 +249,7 @@ sub get_diff_on_two_files {
 # sorted.
 sub get_revisions {
     my ($file_path)   = @_;
-    my $rev_index = -2;
+    my $rev_index     = -2;
     my $file_dir_name = dirname($file_path);
     my $file_name     = basename($file_path);
     my (@files, @revisions);
@@ -314,6 +314,10 @@ sub _wanted {
 
 sub format_time_stamp {
     my ($timestamp) = @_;
+    if (!defined($timestamp)) {
+        $timestamp = 0;
+    }
+    
     my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($timestamp);
     my $pretty_time = sprintf("%02d-%02d-%02d_%02d-%s-%d",

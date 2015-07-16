@@ -10,6 +10,7 @@ use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 init_global init_local parse_config_line save_client_config
+                get_repo_root
                 );
 
 # Internal libs
@@ -68,18 +69,18 @@ sub save_client_config {
 # Tries to find reporoot.
 sub get_repo_root {
     my ($file_path) = @_;
-    if (! -f $file_path) {
+    
+    if (! -d dirname($file_path)) {
         return;
     }
     
-    my $dir = dirname($file_path);
     my $reporoot;
     
-    while ($dir ne "/") {
-        if (-f "$dir/.mycvs/$MYCVS_CONFIG_NAME") {
-            $reporoot = $dir;
+    while ($file_path ne "/") {
+        if (-f "$file_path/.mycvs/$MYCVS_CONFIG_NAME") {
+            $reporoot = $file_path;
         }
-        $dir = dirname($dir);
+        $file_path = dirname($file_path);
     }
     
     return $reporoot;
@@ -89,7 +90,9 @@ sub get_repo_root {
 # returns array of config "$host, $port, $reponame, $user, $pass"
 sub parse_config_line {
     my ($file_path) = @_;
+    
     my $reporoot = get_repo_root($file_path);
+    
     my (@lines, @splitted, %options);
     if (! defined($reporoot)) {
         return;
@@ -97,6 +100,7 @@ sub parse_config_line {
     @lines = read_lines_from_file("$reporoot/.mycvs/$MYCVS_CONFIG_NAME");
     if (@lines) {
         @splitted = split(':', $lines[0]);
+        
         $options{host}     = $splitted[0];
         $options{port}     = $splitted[1];
         $options{reponame} = $splitted[2];
