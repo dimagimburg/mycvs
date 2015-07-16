@@ -1,6 +1,9 @@
 # mycvs
 a project in PERL for custom cvs
 
+dima 17.7
+fixed bug in requests, set up init functions (mycvs init, mycvs clientconfig) added to init_global the creation of base dir, get_user_groups remove_user_from_group remove_group implemented still need to be tested, need to remove prints from functions
+
 dima 14.7
   need to decide what we do with groups and how to give permissions to each repository.
   
