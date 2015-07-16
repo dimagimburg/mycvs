@@ -384,14 +384,15 @@ sub repo_get_commands {
         }
         when("revisions") {
             print "Processing 'revisions' Request\n";
-            @tmp_lines = get_revisions($MYCVS_REPO_STORE.'/'.$reponame.$filename);
+            @tmp_lines = print_revisions_to_array($MYCVS_REPO_STORE.'/'.$reponame.$filename);
             if (!@tmp_lines) {
                 return;
             }
             
             foreach my $line(@tmp_lines) {
-                $content .= $line."\n";
+                $content .= $line;
             }
+            
             $header = "";
         }
         when("timestamp") {

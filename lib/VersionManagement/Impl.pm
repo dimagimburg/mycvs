@@ -15,7 +15,7 @@ our @EXPORT = qw(
                 get_revisions get_dir_contents format_time_stamp get_file_time
                 set_file_time is_file_locked get_locked_user save_string_to_new_file
                 get_timestamp get_merged_plain_file lock_file unlock_file is_file_locked
-                delete_file get_dir_contents_recur
+                delete_file get_dir_contents_recur print_revisions_to_array
                 );
 
 # Checks in file. If first checkin uses function checkin_first.
@@ -422,6 +422,35 @@ sub get_timestamp {
     }
     
     return get_file_time($real_file_name);
+}
+
+sub print_revisions_to_array {
+    my ($file_path) = @_;
+    my @revisions = get_revisions($file_path);
+    my @lines;
+    my $index = 0;
+    my $line_index = 0;
+    
+    if (@revisions) {
+        foreach(@revisions) {
+            my $diff_file = dirname($file_path)."/.mycvs/".basename($file_path).".$_.diff";
+            my $timestamp = format_time_stamp(get_file_time($diff_file));
+            if (!defined($timestamp)) {
+                $timestamp = 0;
+            }
+            
+            $lines[$line_index++] = sprintf ("Revision: %4d, Timestamp: %s", $_, $timestamp) if defined($_);
+            if ($index <=> $#revisions) {
+                $lines[$line_index++] = sprintf "\n";
+            } else {
+                $lines[$line_index++] = sprintf " <--- Latest revision\n";
+            }
+            $index++;
+        }
+    } else {
+        return;
+    }
+    return @lines;
 }
 
 1;

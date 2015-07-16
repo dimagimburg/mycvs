@@ -74,19 +74,7 @@ sub print_revisions {
         print "Revisions for the file: '$file_path':\n";
         print "==========================================\n";
         foreach(@revisions) {
-            my $diff_file = dirname($file_path)."/.mycvs/".basename($file_path).".$_.diff";
-            my $timestamp = format_time_stamp(get_file_time($diff_file));
-            if (!defined($timestamp)) {
-                $timestamp = 0;
-            }
-            
-            printf ("Revision: %4d, Timestamp: %s", $_, $timestamp) if defined($_);
-            if ($index <=> $#revisions) {
-                print "\n";
-            } else {
-                print " <--- Latest revision\n";
-            }
-            $index++;
+            print $_."\n";
         }
     } else {
         die "Can't find revisions of given file.\n";
