@@ -26,10 +26,15 @@ sub start_server {
     die "Can't open socket. Do you have permissions to open port: ".($server->port)."\n" unless $server->socket;
     print "MyCVS WebServer listening on ".($server->port)."...\n";
     while (my $client=($server->socket)->accept()){
-        print "Got Request\n";
+        print "Got Request from '".$client->peerhost."'.\n";
         my ($cgi_vars, $user, $pass, $header, $request, $data);
     
         ($request, $data) = HTTP::HttpServerImpl::get_request_params($server->type, $client);
+        if (!defined($request) && !defined($data)) {
+            $header = HTTP::HttpServerImpl::bad_request_message();
+            HTTP::HttpServerImpl::send_response($server->type, $header, "", $client);
+        }
+        
         if ($request =~ /Authorization:\sBasic\s.+/) {
             my @auth_string = split (/\s/, $&);
             my $user_pass = decode_base64($auth_string[2]);
@@ -40,13 +45,9 @@ sub start_server {
             HTTP::HttpServerImpl::send_response($server->type, $header, "", $client);
             next;
         }
-        #use Data::Dumper;
-        #print Dumper $request;
+        
         my ($request_type, $request_path, $request_version) = split (' ', $request);
-        #print "==================\n";
-        #print $request_type."\n";
-        #print $request_path."\n";
-        #print $request_version."\n";
+        
         given($request_type) {
             when("POST") {
                 print "Processing POST Request\n";

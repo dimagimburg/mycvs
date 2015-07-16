@@ -47,7 +47,11 @@ sub checkout_file {
 # If revision not defined users last revision.
 sub print_revision_diff  {
     my ($file_path, $revision) = @_;
-    my @lines = get_diff($file_path,$revision);
+    
+    die "No file given.\n" if ! defined($file_path);
+    die "Given file not exists.\n" if ! -f $file_path;
+    
+    my @lines = get_remote_plain_diff(realpath($file_path), $revision);
     if (! @lines) {
         print "There are no diferences.\n";
     } else {
@@ -66,6 +70,10 @@ sub print_revision_diff  {
 # Revision: <>, TimeStamp: <>
 sub print_revisions {
     my ($file_path) = @_;
+    if (! -f $file_path) {
+        print "File not found locally.\nChecking remote repository...\n\n";
+    }
+    
     my @revisions = get_remote_revisions(realpath($file_path));
     my $index = 0;
 

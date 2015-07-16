@@ -16,6 +16,7 @@ our @EXPORT = qw(
                 set_file_time is_file_locked get_locked_user save_string_to_new_file
                 get_timestamp get_merged_plain_file lock_file unlock_file is_file_locked
                 delete_file get_dir_contents_recur print_revisions_to_array
+                get_diff_on_two_files
                 );
 
 # Checks in file. If first checkin uses function checkin_first.
@@ -209,9 +210,9 @@ sub merge_back_diff_on_file {
 # + 2 Some new text
 sub get_diff_on_two_files {
     my ($new_file, $old_file) = @_;
-#    my $old_file = $file_path.'.'.$revision.'.'.'diff';
     my @diff = (); # diff lines
     my ($old_line, $new_line);
+    my $new_counter = 1;
     
     open(new_handle, $new_file) or die "Unable to open file. $!. Is it exists?\n";
     open(old_handle, $old_file) or die "Unable to open previous revision. $!.\n";
@@ -225,21 +226,24 @@ sub get_diff_on_two_files {
         if (! defined($old_line)) {last;}
         
         if ($new_line ne $old_line) {
-            push @diff, '- '.$..' '.$old_line;
-            push @diff, '+ '.$..' '.$new_line;
+            push @diff, '- '.$new_counter.' '.$old_line;
+            push @diff, '+ '.$new_counter.' '.$new_line;
         }
+        $new_counter++;
     }
     # If we still have more lines in one of the files, read them all
     # Read till end of old file and mark all 'spare' lines as -
     # in new file diff
     while ($old_line = <old_handle>) {
-        push @diff, '- '.$..' '.$old_line;
+        push @diff, '- '.$new_counter.' '.$old_line;
+        $new_counter++;
     }
     # Read till end of new file and mark all 'spare' lines as +
     # in new file diff. Also make sure that we not missing line
     while ($new_line) {
-        push @diff, '+ '.$..' '.$new_line;
+        push @diff, '+ '.$new_counter.' '.$new_line;
         $new_line = readline new_handle;
+        $new_counter++;
     }
     close(new_handle); close(old_handle);
     return @diff;

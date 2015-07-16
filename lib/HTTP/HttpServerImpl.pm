@@ -52,7 +52,7 @@ sub socket {
 #      Optional: ssl certificate, ssl key         #
 # Post: Returns a perl web server                 #
 # Function: Constructor for the perl web server.  #
-#           Defines HTTP or HTTPS.                #
+#           Defines HTTP (can add https if needed)#
 ###################################################
 sub new {
     my ($type, $port, $cert, $key) = @_;
@@ -139,7 +139,7 @@ sub default_header {
 
 # Generates authentication message
 sub get_auth_message {
-    my $error_page = "<html><h2>Error 401.  Unauthorized.\n</h2></html>";
+    my $error_page = "Error 401.  Unauthorized.\r\n";
     my $length = length($error_page);
     my $header = "HTTP/1.0 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Test\"\r\n";
     $header .= "Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate, s-maxage=0\r\n";
@@ -153,7 +153,14 @@ sub get_auth_message {
 sub not_supported_message {
     my ($request) = @_;
     my $body = "Command: $request not supported\r\n";
-    my $header = "HTTP/1.0 501 Not Implemented\nContent-Type: text/plain\r\n";
+    my $header = "HTTP/1.0 501 Not Implemented\r\nContent-Type: text/plain\r\n";
+    my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
+    my $message = $header.$content_len.$body;
+    return $message;
+}
+sub bad_request_message {
+    my $body = "Mallformed HTTP Request\r\n";
+    my $header = "HTTP/1.0 400 Bad request\r\nContent-Type: text/plain\r\n";
     my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
     my $message = $header.$content_len.$body;
     return $message;
@@ -162,14 +169,14 @@ sub not_supported_message {
 sub file_locked_message {
     my ($repo, $file_path, $user) = @_;
     my $body = "Given file: $file_path in Repo: $repo locked by user: $user.\r\n";
-    my $header = "HTTP/1.0 403 Forbidden\nContent-Type: text/plain\r\n";
+    my $header = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n";
     my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
     my $message = $header.$content_len.$body;
     return $message;
 }
 
 sub not_found_message {
-    my $body = "<html><h2>Not Found</h2></html>";
+    my $body = "Not Found";
     my $header = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\n";
     my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
     my $message = $header.$content_len.$body;
@@ -346,6 +353,9 @@ sub repo_get_commands {
         when("revision") {
             print "Processing 'revision' Request\n";
             ($timestamp, @tmp_lines) = get_merged_plain_file($MYCVS_REPO_STORE.'/'.$reponame.$filename, $revision);
+            if (!@tmp_lines) {
+                return;
+            }
             
             if (defined($timestamp)) {
                 $header = "Time-Stamp: ".$timestamp."\r\n";
