@@ -154,14 +154,5 @@ sub get_remote_checkout {
     return if ! defined($response);
     
     save_string_to_new_file($response, $temp_file_path);
-    set_file_time($temp_file_path, %headers{'time-stamp'})
+    set_file_time($temp_file_path, $headers{'time-stamp'})
 }
-
-
-
-
-
-
-
-
-

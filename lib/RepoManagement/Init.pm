@@ -25,29 +25,33 @@ use UserManagement::Impl;
 use VersionManagement::Impl;
 
 # Initialize a new Server config with username and password for admin
+# sub init{
+#     my($username,$password) = @_;
+
+#     # HERE INITIALIZE ALL THE LOCAL AND GLOBAL IF NECCESSARTY
+
+#     if(exists_user($username)){
+#         # user exists
+#         if(get_pass_hash($username) eq generate_pass_hash($password)){
+#             print "user ok pass ok\n";
+#             print "create repository with admin and password and ask to login to open admin session";
+#         } else {
+#             print "password for user $username is incorrect\n";
+#         }
+#     } else {
+#         print "user: $username not exists in user.db\n";      
+#     }
+# }
+
 sub init{
-    my($username,$password) = @_;
-
-    # HERE INITIALIZE ALL THE LOCAL AND GLOBAL IF NECCESSARTY
-
-    if(exists_user($username)){
-        # user exists
-        if(get_pass_hash($username) eq generate_pass_hash($password)){
-            print "user ok pass ok\n";
-            print "create repository with admin and password and ask to login to open admin session";
-        } else {
-            print "password for user $username is incorrect\n";
-        }
-    } else {
-        print "user: $username not exists in user.db\n";      
-    }
+    init_local(getcwd());
 }
-
 
 # Create global dir tree
 sub init_global {
     # Create global configuration dir that will hold all the db files
     check_and_create_dir($MYCVS_GLOBAL_BASEDIR);
+    check_and_create_dir(check_and_create_dir($MYCVS_DB_FOLDER));
     init_users_db();
     init_groups_db();
     init_admins_db();
@@ -58,14 +62,22 @@ sub init_global {
 sub init_local {
     my ($dir) = @_;
     check_and_create_dir($dir.'/.mycvs');
-    
 }
 
-
+# Creates config file and saves client config file in root ./mycvs client path
 sub save_client_config {
     my ($host, $port, $reponame, $user, $pass, $dir) = @_;
     check_and_create_dir("$dir/.mycvs");
-    save_string_to_new_file("$host:$port:$reponame:$user:$pass", "$dir/.mycvs/$MYCVS_CONFIG_NAME")
+    save_config("$host:$port:$reponame:$user:$pass", "$dir/.mycvs/$MYCVS_CONFIG_NAME")
+}
+
+# writes the config string to the file
+sub save_config{
+    my ($cfg,$path) = @_;
+    open(my $fh, '>>', $path) or die "\n\nerror opening config file\n\n";
+    print $fh "$cfg\n";
+    close($fh);
+    print "Configuration successful.\n";
 }
 
 # Tries to find reporoot.
@@ -121,7 +133,7 @@ sub check_and_create_dir {
     my ($dir) = @_;
     if (defined("$dir") && $dir ne "") {
         if (! -e "$dir") {
-            print "$dir not found. Creating....";
+            print "$dir not found. Creating...\n";
             make_path($dir) or die "Couldn't create dir '$dir'. Please verify that directory is writable.\n";
         }
     } else {
@@ -155,7 +167,7 @@ sub init_admins_db {
 sub create_file {
     my ($fname) = @_;
     if (defined($fname) && $fname ne "") {
-        open(my $fh, '>', $fname) or die "Can not init $fname.";
+        open(my $fh, '>', $fname) or die "Can not create $fname.";
         close($fh);
     }   
 }

@@ -178,7 +178,21 @@ sub exists_group{
 # Returns list of groups that user belongs to
 sub get_user_groups {
     my ($user_name) = @_;
-    
+    if(exists_user($user_name)){
+        my @groups = ();
+        my $groups_file = $MYCVS_GROUPS_DB;
+        open (my $fh,  '<', $groups_file ) || die "Can't open $infile $!\n"; # read
+        while (my $row = <$fh>){
+            my $group = split(/:/,$row,2)[0];
+            my $users = split(/:/,$row,2)[1];
+            if($users =~ /$user_name/){
+                push(@groups,$group);
+            }
+        }
+    } else {
+        print "user: $user_name not exists.\n"
+    }
+    return @groups;
 }
 
 # Adds user to group. If group not exists prints error
@@ -234,11 +248,76 @@ sub add_user_to_group_impl {
 # Removes user from group
 sub remove_user_from_group {
     my ($user_name, $group_name) = @_;
+    if(exists_user($user_name)){
+        # user exists in users.db
+        if(exists_group($group_name)){
+            # group exists in groups.db
+            my @row_splited;
+            my @group_splited;
+            my $infile = $MYCVS_GROUPS_DB;
+            my $outfile = "$infile.tmp"; # temp file which will be renamed after the insertion of new user
+
+            open (my $in,  '<', $infile ) || die "Can't open $infile $!\n"; # read
+            open (my $out, '>', $outfile) || die "Can't open $outfile $!\n"; # write
+
+            while (my $row = <$in>){   
+                @row_splited = split(/:/,$row,2); # get the group name from beggining of the line in groups.db
+                if($row_splited[0] eq $group_name){
+                    # group name found, now check if user already exsists in group
+                    if($row_splited[1] =~ /$user_name/){
+                        my $new_row = $row_splited =~ s/$user_name//g
+                        $new_row =~ s/:://g
+                        print $out $new_row;
+                    }
+                } else {
+                    # group name not found keep on the loop
+                    print $out $row;
+                }
+            }
+
+            close ($in);
+            close ($out);
+
+            rename ($outfile, $infile) || die "Unable to rename: $!"; # rename the temp file to the original file.
+
+        } else {
+            # wrong group name
+            print "group: $group_name not exists.\n"
+        }
+    } else {
+        # wrong user name
+        print "user: $user_name not exists.\n"
+    }
 }
 
 # Removes group from DB.
 sub remove_group {
-    my ($group) = @_;
+    if(exists_group($group_name)){
+        # group exists in groups.db
+        my @row_splited;
+        my @group_splited;
+        my $infile = $MYCVS_GROUPS_DB;
+        my $outfile = "$infile.tmp"; # temp file which will be renamed after the insertion of new user
+
+        open (my $in,  '<', $infile ) || die "Can't open $infile $!\n"; # read
+        open (my $out, '>', $outfile) || die "Can't open $outfile $!\n"; # write
+
+        while (my $row = <$in>){   
+            @row_splited = split(/:/,$row,2); # get the group name from beggining of the line in groups.db
+            if($row_splited[0] ne $group_name){
+                print $out $row;
+            }
+        }
+
+        close ($in);
+        close ($out);
+
+        rename ($outfile, $infile) || die "Unable to rename: $!"; # rename the temp file to the original file.
+
+    } else {
+        # wrong group name
+        print "group: $group_name not exists.\n"
+    }
 }
 
 # Changes user password. If chnage_pass(new_user) create new hash.
@@ -298,18 +377,32 @@ sub search_pattern_in_line_begining{
         return 0;
 }
 
-# returns true if base dir /opt/.mycvs/ exists, else false
+# returns true if base dir mycvs/ exists, else false
 sub exists_base_dir {
     if(-d $MYCVS_GLOBAL_BASEDIR) { return 1 }
     return 0;
 }
 
-# Will check if user exists in given group
+# check if user exists in given group
 sub exist_user_in_group {
     my ($username, $groupname) = @_;
-    
-    
-    return 1;
+    $groups_db_path = $MYCVS_GROUPS_DB;
+    my $group_pattern = "^$groupname";
+
+    open(my $fh, '<:encoding(UTF-8)', $groups_db_path);
+
+    while(my $row = <$fh>){
+        chomp $row;
+        if($row =~ /$group_pattern/){
+            # group found
+            my @users = split(':',$row);
+            foreach $user (@user){
+                if($username eq $user) { return 1; }
+            }
+            return 0;
+        }
+    }
+    return 0;
 }
 
 # Will check if user is admin user
