@@ -120,8 +120,8 @@ sub usage {
     print "    $0 repo rem <reponame>               - Remove remote repo.\n";
     print "    $0 repo list                         - List remote repos.\n";
     print "    $0 repo members <reponame>           - List repo users.\n";
-    print "    $0 repo add user <user> <reponame>   - Add user to repo.\n";
-    print "    $0 repo rem user <user> <reponame>   - Remove user from repo.\n";
+    print "    $0 repo user rem <user> <reponame>   - Add user to repo.\n";
+    print "    $0 repo user add <user> <reponame>   - Remove user from repo.\n";
     print "    $0 user add <user>                   - Add user.\n";
     print "    $0 user rem <user>                   - Remove user.\n";
     print "    $0 user repo list <user>             - List user's groups.\n";

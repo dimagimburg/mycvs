@@ -15,6 +15,7 @@ use strict; use warnings;
 use Digest::MD5 qw(md5_hex);
 use Exporter qw(import);
 use File::Path qw(make_path);
+use File::Copy qw(move);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 create_user_record create_group_record
@@ -22,7 +23,7 @@ our @EXPORT = qw(
                 remove_group change_pass get_pass_hash login_user
                 logout_user get_session exists_user generate_pass_hash
                 exist_user_in_group is_user_admin create_admin_user
-                list_users create_admin_user
+                list_users create_admin_user create_user_record_silent
                 );
                 
 # Internal libs
@@ -61,6 +62,37 @@ sub create_user_record {
             # CANT ADD USER WHEN THERE IS NO .MYCVS INITIALIZED IN OPT
             # SEE WHAT IS THE SOLUTION
             print "repository is not initialized.\n";
+        }
+    }
+}
+
+sub create_user_record_silent {
+    my ($user_name, $pass_hash) = @_;
+    if (!defined($user_name) || !defined($pass_hash)) {
+        return;
+    }
+    
+    if(exists_users_db_file()){
+        # file user.db exists
+        if(exists_user($user_name)){
+            # username entered already exists, show error message
+            return 0;
+        } else {
+            # file exists, new user, add user to file
+            append_user_to_users_db_file($user_name,$pass_hash);
+            return 1;
+        }
+    } else {
+        # user.db not exists
+        if(exists_base_dir()){
+            # /opt/.mycvs exists create file user.db and add the user
+            append_user_to_users_db_file($user_name,$pass_hash);
+            return 1;
+        } else {
+            # CANT ADD USER WHEN THERE IS NO .MYCVS INITIALIZED IN OPT
+            # SEE WHAT IS THE SOLUTION
+            print "repository is not initialized.\n";
+            return 2;
         }
     }
 }
@@ -225,11 +257,13 @@ sub add_user_to_group_impl {
                         # user name already exists in group, keep moving on
                         print "user: $user_name is already in group: $group_name\n";
                         print $out $row;
+                        return 2;
                     } else {
                         # user addition to group
-                        @group_splited = split(/\n/,$row,2); # escaping the \n in the end of the line.
-                        print $out $group_splited[0].$user_name.":\n";
+                        chomp $row;
+                        print $out $row.','.$user_name."\n";
                         print "user: $user_name added successfully to group: $group_name\n";
+                        return 1;
                     }
                 } else {
                     # group name not found keep on the loop
@@ -239,16 +273,18 @@ sub add_user_to_group_impl {
 
             close ($in);
             close ($out);
-
-            rename ($outfile, $infile) || die "Unable to rename: $!"; # rename the temp file to the original file.
-
+            unlink $infile;
+            move ($outfile, $infile) || die "Unable to rename: $!"; # rename the temp file to the original file.
+            return 1;
         } else {
             # wrong group name
-            print "group: $group_name not exists.\n"
+            print "group: $group_name not exists.\n";
+            return 0;
         }
     } else {
         # wrong user name
-        print "user: $user_name not exists.\n"
+        print "user: $user_name not exists.\n";
+        return 0;
     }
 }
 
@@ -261,6 +297,7 @@ sub remove_user_from_group {
             # group exists in groups.db
             my @row_splited;
             my @group_splited;
+            my $change_flag = 0;
             my $infile = $MYCVS_GROUPS_DB;
             my $outfile = "$infile.tmp"; # temp file which will be renamed after the insertion of new user
 
@@ -271,14 +308,16 @@ sub remove_user_from_group {
                 @row_splited = split(/:/,$row,2); # get the group name from beggining of the line in groups.db
                 if($row_splited[0] eq $group_name){
                     # group name found, now check if user already exsists in group
-                    if($row_splited[1] =~ /$user_name/){
-                        my $new_row = $row_splited[1] =~ s/$user_name//g;
-                        $new_row =~ s/:://g;
-                        print $out $new_row;
+                    if($row_splited[1]  =~ /$user_name/){
+                        $row_splited[1]  =~ s/$user_name//;
+                        $row_splited[1]  =~ s/^,//;
+                        $row_splited[1] =~ s/,$//;
+                        print $out $group_name.':'.$row_splited[1];
+                        $change_flag = 1;
+                    } else {
+                        # group name not found keep on the loop
+                        print $out $row;
                     }
-                } else {
-                    # group name not found keep on the loop
-                    print $out $row;
                 }
             }
 
@@ -286,14 +325,16 @@ sub remove_user_from_group {
             close ($out);
 
             rename ($outfile, $infile) || die "Unable to rename: $!"; # rename the temp file to the original file.
-
+            return $change_flag;
         } else {
             # wrong group name
-            print "group: $group_name not exists.\n"
+            print "group: $group_name not exists.\n";
+            return 0;
         }
     } else {
         # wrong user name
-        print "user: $user_name not exists.\n"
+        print "user: $user_name not exists.\n";
+        return 0;
     }
 }
 

@@ -15,7 +15,8 @@ our @EXPORT = qw(
                 get_remote_revisions get_remote_plain_diff
                 get_remote_checkout post_remote_checkin
                 get_remote_repo_content post_create_remote_repo
-                delete_remote_repo
+                delete_remote_repo delete_remote_repo_perm
+                post_remote_repo_perm post_remote_add_user
                 );
 
 # Internal libs
@@ -229,7 +230,7 @@ sub get_remote_repo_content {
 
 sub post_create_remote_repo {
     my ($reponame) = @_;
-    my ($data, $vars, $response, $local_file_path, @file_lines, %headers);
+    my ($vars, $response, %headers);
     my $file_path = getcwd().'/.';
     
     if (! check_http_prerequisites($file_path)) {
@@ -243,8 +244,8 @@ sub post_create_remote_repo {
 }
 
 sub delete_remote_repo {
-        my ($reponame) = @_;
-    my ($data, $vars, $response, $local_file_path, @file_lines, %headers);
+    my ($reponame) = @_;
+    my ($vars, $response, %headers);
     my $file_path = getcwd().'/.';
     
     if (! check_http_prerequisites($file_path)) {
@@ -260,7 +261,68 @@ sub delete_remote_repo {
     return $reponame;
 }
 
+sub delete_remote_repo_perm {
+    my ($reponame, $user) = @_;
+    my ($vars, $response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    if (!defined($reponame) || !defined($user)) {
+        return;
+    }
+    
+    $vars = "reponame=".$reponame."&username=".$user;
+    
+    ($response, %headers) = send_http_request('DELETE',
+                                              $delete_commands{remove_repo_perm},
+                                              $vars);
+    return $response;
+}
 
+sub post_remote_repo_perm {
+    my ($user, $reponame) = @_;
+    my ($vars, $response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    if (!defined($user) || !defined($reponame)) {
+        return;
+    }
+    
+    $vars = "username=".$user."&reponame=".$reponame;
+    
+    ($response, %headers) = send_http_request('POST',
+                                              $post_commands{add_user_to_repo},
+                                              $vars);
+    return $response;
+}
+
+sub post_remote_add_user {
+    my ($user, $passhash, $isAdmin) = @_;
+    my ($vars, $response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    if (!defined($user) || !defined($passhash)) {
+        return;
+    }
+    if (!defined($isAdmin)) {
+        $isAdmin = 'false';
+    }
+    
+    $vars = "username=".$user."&pass=".$passhash."&admin=".$isAdmin;
+    
+    ($response, %headers) = send_http_request('POST',
+                                              $post_commands{create_user},
+                                              $vars);
+    return $response;
+}
 
 
 

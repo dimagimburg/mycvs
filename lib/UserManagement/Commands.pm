@@ -62,12 +62,22 @@ sub print_users {
 }
 # Interactively add user to group
 sub add_user_to_group {
-    my ($user, $group) = @_;
-    UserManagement::Impl::add_user_to_group_impl($user, $group);
+    my ($user, $group) = @ARGV;
+    if (!defined($user) || !defined($group)) {
+        die "You need to enter reponame and username.\n";
+    }
+    my $reply = post_remote_repo_perm($user, $group);
+    print $reply;
 }
 # Interactively removes user from group
 sub rem_user_from_group {
-    my ($user, $group) = @_;
+    my ($user, $group) = @ARGV;
+    if (! defined($user) || !defined($group)) {
+        die "You need to specify reponame and username.\n";
+    }
+    
+    my $reply = delete_remote_repo_perm($group, $user);
+    print $reply;
 }
 # Simply prints groups that user belons to.
 sub list_user_groups {

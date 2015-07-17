@@ -177,8 +177,7 @@ sub file_locked_message {
 }
 
 sub already_exists_message {
-    my ($repo, $file_path) = @_;
-    my $body = "Given repo: '$repo' or file: '$file_path' already exists.\r\n";
+    my ($body) = @_;
     my $header = "HTTP/1.0 409 Conflict\r\nContent-Type: text/plain\r\n";
     my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
     my $message = $header.$content_len.$body;
@@ -195,7 +194,7 @@ sub not_found_message {
 
 sub process_post {
     my ($request_path, $user, $pass, $data) = @_;
-    my ($command_line, $command, $vars_line, $header, %vars);
+    my ($command_line, $command, $vars_line, $header, $content, %vars);
     if (authorize_user($user, $pass) ne 200) {
         return (get_auth_message(), "");
     }
@@ -207,28 +206,31 @@ sub process_post {
     given(get_parent_command($command_line)) {
         when("repo") {
             print "Processing 'repo' Request\n";
-            $header = repo_post_commands(get_sub_command($command_line), $user, $data, %vars);
+            ($header, $content) = repo_post_commands(get_sub_command($command_line), $user, $data, %vars);
         }
         when("user") {
             print "Processing 'user' Request\n";
-            $header = user_post_commands(get_sub_command($command_line), $user, %vars);
+            ($header, $content) = user_post_commands(get_sub_command($command_line), $user, %vars);
         }
         default {
             print "'".$command_line."' Not supported Request\n";
             return (not_supported_message($request_path), "");
         }
     }
-    
-    if ((!defined($header))) {
+       
+    if (!defined($header)) {
         $header = not_supported_message($request_path);
+        $content = "";
     } elsif ($header eq "locked") {
         $header = file_locked_message($vars{'reponame'}, $vars{'filename'});
+    } elsif (defined($header) && !defined($content)) {
+        $data = "";
     } else {
-        $header = default_header(0, $header);
+        $header = default_header(length($content), $header);
     }
     
     
-    return ($header, "");
+    return ($header, $content);
     
 }
 # Returns Header + Data content
@@ -479,14 +481,22 @@ sub repo_delete_commands {
             return if !defined($reponame);
             if (remove_local_repo($reponame)) {
                 $header = "";
-                $content = "Successfully remove repo: '$reponame'\n";
+                $content = "Successfully removed repo: '$reponame'\n";
             } else {
                 return;
             }
         }
         when("/user/del") {
             print "Processing '/user/del' Request\n";
-            # Revoke user permission on repository
+            if (!defined($username) || !defined($reponame)) {
+                return;
+            }
+            if (remove_user_from_group($username, $reponame)) {
+                $header   = "";
+                $content  = "Successfully revoked user permission\n";
+                $content .= "Username: '$username', Repository: '$reponame'\n";
+            }
+            
         }
         default {
             print "'".$command."' Not supported Request\n";
@@ -501,14 +511,15 @@ sub repo_post_commands {
     my $reponame = $vars{'reponame'};
     my $filename = $vars{'filename'};
     my $revision = $vars{'revision'};
-    my $header;
+    my ($header, $content);
     
     
     given($command) {
         when("/checkin") {
             print "Processing 'checkin' Request\n";
             if ((! defined($reponame)) || (! defined($filename))) {
-                return;
+                return (bad_request_message(), "");
+                
             }
             if (! exist_user_in_group($user, $reponame)) {
                 return get_auth_message();
@@ -524,28 +535,51 @@ sub repo_post_commands {
             
             unlock_file($real_file_path);
             $header = "";
+            $content = "";
         }
         when("/add") {
             print "Processing 'add' Request\n";
+            if (! is_user_admin($user)) {
+                return (get_auth_message(), "");
+            }
             if (!defined($reponame)) {
                 return;
             }
             
             if (!create_local_repo($reponame)) {
-                return already_exists_message($reponame, "");
+                return already_exists_message("Given repo: '$reponame' already exists.\r\n");
             }
             $header = "";
+            $content = "";
             
         }
         when("/user/add") {
             print "Processing '/user/add' Request\n";
+            if (! is_user_admin($user)) {
+                return (get_auth_message(), "");
+            }
             my $username = $vars{'username'};
-            my $passhash = $vars{'pass'};
-            my $isAdmin = $vars{'admin'};
             
+            if (!defined($username) || !defined($reponame)) {
+                return;
+            }
+            
+            
+            my $err = add_user_to_group_impl($username, $reponame);
+            if ($err eq 1) {
+                $header =""; $content = "Successfully add user: '$username' to repo: '$reponame'\n";
+            } elsif ($err eq 2) {
+                $header = already_exists_message("Given user: '$username' already exists in given repo: '$reponame'.\r\n");
+                $content = ""
+            } else {
+                return;
+            }
         }
         when("/unlock") {
             print "Processing 'unlock' Request\n";
+            if (! is_user_admin($user)) {
+                return (get_auth_message(), "");
+            }
             
         }
         default {
@@ -554,7 +588,7 @@ sub repo_post_commands {
         }
     }
     
-    return $header;
+    return ($header, $content);
 }
 
 sub user_post_commands {
@@ -562,10 +596,44 @@ sub user_post_commands {
     my $reponame = $vars{'reponame'};
     my $filename = $vars{'filename'};
     my $revision = $vars{'revision'};
-    my $header;
+    my ($header, $content);
+    
+    if ($command eq '/add') {
+        print "Processing '/add' Request\n";
+        if (! is_user_admin($user)) {
+            return (get_auth_message(), "");
+        }
+        my $username = $vars{'username'};
+        my $passhash = $vars{'pass'};
+        my $isAdmin = $vars{'admin'};
+        
+        if (!defined($username) || !defined($passhash)) {
+            return;
+        }
+        if (!defined($isAdmin)) {
+            $isAdmin = 'false';
+        }
+        my $err = create_user_record_silent($username, $passhash);
+        if ($err eq 1) {
+            if ($isAdmin eq "true") {
+                create_admin_user($username);
+            }
+            $content = "Successfully added user: $username\n";
+            $header = "";
+        } elsif ($err eq 2) {
+            $header = already_exists_message("User: '$username' already exists.\n");
+        } else {
+            return;
+        }
+        
+        
+    } else {
+        return;
+    }
     
     
-    return $header;
+    
+    return ($header, $content);
 }
 sub user_delete_commands {
     my ($command, $user, %vars) = @_;
@@ -573,6 +641,10 @@ sub user_delete_commands {
     my $filename = $vars{'filename'};
     my $revision = $vars{'revision'};
     my $header;
+    
+    if ($command eq '/del') {
+        #code
+    }
     
     
     return $header;
