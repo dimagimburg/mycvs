@@ -3,14 +3,14 @@ package RepoManagement::Init;
 
 # Perl libs & vars
 use strict; use warnings;
-use File::Path qw(make_path);
+use File::Path qw(make_path remove_tree);
 use File::Basename;
 use Cwd;
 use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 init_global init_local parse_config_line save_client_config
-                get_repo_root
+                get_repo_root create_local_repo remove_local_repo
                 );
 
 # Internal libs
@@ -133,7 +133,6 @@ sub check_and_create_dir {
     my ($dir) = @_;
     if (defined("$dir") && $dir ne "") {
         if (! -e "$dir") {
-            print "$dir not found. Creating...\n";
             make_path($dir) or die "Couldn't create dir '$dir'. Please verify that directory is writable.\n";
         }
     } else {
@@ -170,6 +169,32 @@ sub create_file {
         open(my $fh, '>', $fname) or die "Can not create $fname.";
         close($fh);
     }   
+}
+
+sub create_local_repo {
+    my ($reponame) = @_;
+    return if ! defined($reponame);
+    my $dir_path = $MYCVS_REPO_STORE.'/'.$reponame;
+    if (!-d $dir_path) {
+        check_and_create_dir($dir_path);
+        return create_group_record($reponame);
+    } else {
+        return 0;
+    }
+}
+
+sub remove_local_repo {
+    my ($reponame) = @_;
+    return if ! defined($reponame);
+    my $dir_path = $MYCVS_REPO_STORE.'/'.$reponame;
+    
+    if (-d $dir_path && remove_group($reponame)) {
+        remove_tree($dir_path);
+        return 1;
+    } else {
+        return 0;
+    }
+    
 }
 
 

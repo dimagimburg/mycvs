@@ -11,7 +11,7 @@ use Cwd qw(realpath);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 checkin_file checkout_file print_revision_diff
-                print_revisions
+                print_revisions print_file_list
                 );
 # Internal libs
 use lib qw(../);
@@ -102,6 +102,23 @@ sub print_revisions {
         }
     } else {
         die "Can't find revisions of given file.\n";
+    }
+}
+
+sub print_file_list {
+    my @files = get_remote_repo_content();
+    if (!@files) {
+        die "Remote Repository doesn't have files\n";
+    }
+    print "Listing repository files\n";
+    print "==============================\n";
+    foreach my $file(@files) {
+        $file =~ s/^\///;
+        if (-f $file) {
+            print "L - Filename: '$file'\n";
+        } else {
+            print "R - Filename: '$file'\n";
+        }
     }
 }
 

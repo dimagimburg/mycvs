@@ -33,12 +33,11 @@ given(shift(@ARGV)) {
         checkout(shift(@ARGV), $revision);
     }
     when ('user') { user(shift(@ARGV),shift(@ARGV),shift(@ARGV),shift(@ARGV)); }
-    when ('group') { group(shift(@ARGV),shift(@ARGV)); }
-    when ('login') { login(shift(@ARGV)); }
-    when ('logout') { logout(shift(@ARGV)); }
+    when ('repo') { group(shift(@ARGV),shift(@ARGV)); }
     when ('revisions') { get_revisions(shift(@ARGV)); }
     when ('server') { http_server(shift(@ARGV)); }
     when ('clientconfig') {config();}
+    when ('filelist') {filelist();}
     default { usage(); } 
 }
 
@@ -63,10 +62,8 @@ sub user {
         when ('add') {UserManagement::Commands::add_user(shift,shift);}
         when ('rem') {UserManagement::Commands::rem_user_from_group(shift);}
         when ('list') {UserManagement::Commands::list_users();}
-        when ('group') {
+        when ('repo') {
             given(shift) {
-                when ('add') {UserManagement::Commands::add_user_to_group(shift, shift);}
-                when ('rem') {UserManagement::Commands::rem_user_from_group(shift, shift);}
                 when ('list') {UserManagement::Commands::list_user_groups(shift);}
                 default {usage();}
             }
@@ -81,16 +78,15 @@ sub group {
         when ('rem') {UserManagement::Commands::group_rem(shift);}
         when ('list') {UserManagement::Commands::list_groups();}
         when ('members') {UserManagement::Commands::list_group_members(shift);}
+        when  ('user') {
+            given(shift) {
+                when ('add') {UserManagement::Commands::add_user_to_group(shift, shift);}
+                when ('rem') {UserManagement::Commands::rem_user_from_group(shift, shift);}
+                default {usage();}
+            }
+        }
         default {usage();}
     }
-}
-
-sub login {
-    UserManagement::Commands::login_impl(shift);
-}
-
-sub logout {
-    UserManagement::Commands::logout_impl(shift);
 }
 
 sub get_revisions {
@@ -105,24 +101,28 @@ sub config {
     RepoManagement::Commands::create_user_config();
 }
 
+sub filelist {
+    VersionManagement::Commands::print_file_list();
+}
+
 sub usage {
     print "\n    USAGE:\n";
     print "    $0 server                            - Server Configuration.\n";
     print "    $0 clientconfig                      - initializing local repository.\n";
+    print "    $0 filelist                          - List repository content. (R - only remote, L - remote and local)\n";
     print "    $0 checkin <filename>                - add/checking file to repository.\n";
     print "    $0 checkout <filename>               - checkout file from repository.(Overwrites)\n";
     print "    $0 checkout -r <revision> <filename> - checkout file from repository at specific revision.(Overwrites)\n";
     print "    $0 revisions <filename>              - list file revisions.\n";
     print "    $0 diff <filename>                   - displays diff of local file and latest repo revision.\n";
     print "    $0 diff -r <revision> <filename>     - displays diff of local file and specific repo revision.\n";
-    print "    $0 group add <group>                 - Add group.\n";
-    print "    $0 group rem <group>                 - Remove group.\n";
-    print "    $0 group list                        - List groups.\n";
-    print "    $0 group members <group>             - List group members.\n";
+    print "    $0 repo add <reponame>               - Add remote repo.\n";
+    print "    $0 repo rem <reponame>               - Remove remote repo.\n";
+    print "    $0 repo list                         - List remote repos.\n";
+    print "    $0 repo members <reponame>           - List repo users.\n";
+    print "    $0 repo add user <user> <reponame>   - Add user to repo.\n";
+    print "    $0 repo rem user <user> <reponame>   - Remove user from repo.\n";
     print "    $0 user add <user>                   - Add user.\n";
     print "    $0 user rem <user>                   - Remove user.\n";
-    print "    $0 user list                         - List users.\n";
-    print "    $0 user group list <user>            - List user's groups.\n";
-    print "    $0 user group add <user> <group>     - Add user to group.\n";
-    print "    $0 user group rem <user> <group>     - Remove user from group.\n";
+    print "    $0 user repo list <user>             - List user's groups.\n";
 }

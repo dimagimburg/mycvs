@@ -19,6 +19,7 @@ our @EXPORT = qw(
 # Internal libs
 use lib qw(../);
 use UserManagement::Impl;
+use HTTP::HttpServerRequests;
 
 # Interactive user add
 sub add_user {
@@ -82,12 +83,23 @@ sub list_groups {
 }
 # Interactively adds group.
 sub group_add {
-    my ($group) = @_;
-    create_group_record($group);
+    my ($reponame) = @_;
+    die "Please enter reponame" if ! defined($reponame);
+    
+    post_create_remote_repo($reponame);
+    print "Repo: '$reponame' created!.\n";
 }
 # Interactively removes group.
 sub group_rem {
-    my ($group) = @_;
+    my ($reponame) = @_;
+    die "Please enter reponame" if ! defined($reponame);
+    print "Are you sure to remove remote repo '$reponame'?\n";
+    print "All the repo contents will be removed!!![y/n] (n - default) ";
+    my $answer = <STDIN>; chomp $answer;
+    return if ($answer ne "y");
+    
+    delete_remote_repo($reponame);
+    print "Repo: '$reponame' deleted.\n"
 }
 
 1;

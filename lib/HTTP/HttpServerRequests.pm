@@ -14,6 +14,8 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 get_remote_revisions get_remote_plain_diff
                 get_remote_checkout post_remote_checkin
+                get_remote_repo_content post_create_remote_repo
+                delete_remote_repo
                 );
 
 # Internal libs
@@ -76,6 +78,7 @@ sub send_http_request {
     print Dumper $response;
     return ($response->{content}, %{$response->{headers}}) if $response->{status} eq 200;
     die "Requested resourse not Found.\n" if $response->{status} eq 404;
+    die $response->{content}."\n" if $response->{status} eq 409;
     die "You not Authorized\n" if $response->{status} eq 401;
     die "Action Forbidden. ".$response->{content}."\n" if $response->{status} eq 403;
     die "Not Implemented. ".$response->{content}."\n" if $response->{status} eq 501;
@@ -203,7 +206,59 @@ sub post_remote_checkin {
     return 1;
 }
 
+sub get_remote_repo_content {
+    my ($data, $vars, $response, @file_lines, %headers);
+    my $file_path = getcwd().'/.';
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    my %options = parse_config_line($file_path);
+    my $reporoot = get_repo_root($file_path);
+    
+    $vars = "reponame=".$options{reponame};
+    
+    ($response, %headers) = send_http_request('GET',
+                                              $get_commands{get_filelist},
+                                              $vars, $data);
+    if (!defined($response)) {
+        return;
+    }
+    
+    return convert_response_to_array($response);
+}
 
+sub post_create_remote_repo {
+    my ($reponame) = @_;
+    my ($data, $vars, $response, $local_file_path, @file_lines, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    
+    $vars = "reponame=".$reponame;
+       
+    
+    ($response, %headers) = send_http_request('POST', $post_commands{add_repo}, $vars);
+}
+
+sub delete_remote_repo {
+        my ($reponame) = @_;
+    my ($data, $vars, $response, $local_file_path, @file_lines, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    
+    $vars = "reponame=".$reponame;
+       
+    
+    ($response, %headers) = send_http_request('DELETE',
+                                              $delete_commands{delete_repo},
+                                              $vars);
+    return $reponame;
+}
 
 
 

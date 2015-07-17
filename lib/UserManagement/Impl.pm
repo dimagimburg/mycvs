@@ -130,10 +130,12 @@ sub create_group_record {
         if(exists_group($group_name)){
             # group entered already exists, show error message
             print "group: ".$group_name." already exists, cannot add existing group.\n";
+            return 0;
         } else {
             # file exists, new user, add user to file
             append_group_to_groups_db_file($group_name);
             print "group: ".$group_name." successfully added.\n";
+            return 1;
         }
     } else {
         # groups.db not exists
@@ -141,13 +143,17 @@ sub create_group_record {
             # /opt/.mycvs exists create file groups.db and add the group
             append_group_to_groups_db_file($group_name);
             print "group: ".$group_name." successfully added.\n";
+            return 1;
         } else {
             # CANT ADD USER WHEN THERE IS NO .MYCVS INITIALIZED IN OPT
             # SEE WHAT IS THE SOLUTION
             print "repository is not initialized.\n";
+            return 0;
         }
     }
 }
+
+
 
 # appends to end of groups.db file the new group
 sub append_group_to_groups_db_file {
@@ -173,6 +179,7 @@ sub exists_group{
 
     } else {
         print "please initialize mycvs.\n";
+        return 0;
     }
 }
 # Returns list of groups that user belongs to
@@ -314,10 +321,11 @@ sub remove_group {
         close ($out);
 
         rename ($outfile, $infile) || die "Unable to rename: $!"; # rename the temp file to the original file.
-
+        return 1;
     } else {
         # wrong group name
-        print "group: $group_name not exists.\n"
+        print "group: $group_name not exists.\n";
+        return 0;
     }
 }
 

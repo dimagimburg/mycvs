@@ -18,25 +18,10 @@ our @EXPORT = qw(
                 );
 # Internal libs
 use lib qw(../);
-use UserManagement::Commands;
+#use UserManagement::Commands;
 use RepoManagement::Configuration qw($MYCVS_REPO_STORE);
 use RepoManagement::Init;
 use VersionManagement::Impl;
-
-# Create repository entry in DB
-sub create_repo {
-    my ($root_dir_path) = @_;
-    # add entry to $RepoManagement::Configuration::MYCVS_REPOS_DB
-    # if entry exists print error
-    
-}
-
-# Removes repository entry from DB
-sub delete_repo {
-    my ($root_dir_path) = @_;
-    # remove entry from $RepoManagement::Configuration::MYCVS_REPOS_DB
-    # if not exists print error
-}
 
 # Returns list of all repositories names
 sub get_repositories {
@@ -63,16 +48,6 @@ sub get_repo_root_of_file {
     } else {
         return $reporoot;
     }
-}
-
-# Creates repository's admin group
-sub create_admin_repo_group {
-    my ($repo_root_dir) = @_;
-}
-
-# Creates repository's user's group
-sub create_users_repo_group {
-    my ($repo_root_dir) = @_;
 }
 
 sub create_user_config {

@@ -13,6 +13,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 use lib qw(../);
 use RepoManagement::Configuration qw($MYCVS_REPO_STORE $MYCVS_GLOBAL_BASEDIR);
+use RepoManagement::Init;
 use UserManagement::Impl;
 use VersionManagement::Impl;
 
@@ -175,6 +176,15 @@ sub file_locked_message {
     return $message;
 }
 
+sub already_exists_message {
+    my ($repo, $file_path) = @_;
+    my $body = "Given repo: '$repo' or file: '$file_path' already exists.\r\n";
+    my $header = "HTTP/1.0 409 Conflict\r\nContent-Type: text/plain\r\n";
+    my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
+    my $message = $header.$content_len.$body;
+    return $message;
+}
+
 sub not_found_message {
     my $body = "Not Found";
     my $header = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\n";
@@ -260,7 +270,7 @@ sub process_get {
 
 sub process_delete {
     my ($request_path, $user, $pass) = @_;
-    my ($command_line, $command, $vars_line, $header, %vars);
+    my ($command_line, $command, $vars_line, $header, $data, %vars);
     if (authorize_user($user, $pass) ne 200) {
         return (get_auth_message(), "");
     }
@@ -272,11 +282,11 @@ sub process_delete {
     given(get_parent_command($command_line)) {
         when("repo") {
             print "Processing 'repo' Request\n";
-            $header = repo_delete_commands(get_sub_command($command_line), $user, %vars);
+            ($header, $data) = repo_delete_commands(get_sub_command($command_line), $user, %vars);
         }
         when("user") {
             print "Processing 'user' Request\n";
-            $header = user_delete_commands(get_sub_command($command_line), $user, %vars);
+            ($header, $data) = user_delete_commands(get_sub_command($command_line), $user, %vars);
         }
         default {
             print "'".get_parent_command($command_line)."' Not supported Request\n";
@@ -284,14 +294,19 @@ sub process_delete {
         }
     }
     
-    if ((!defined($header))) {
+    if (!defined($data)) {
+        $header = not_found_message();
+        $data = "";
+    } elsif (!defined($header)) {
         $header = not_supported_message($request_path);
+    } elsif (defined($header) && !defined($data)) {
+        $data = "";
     } else {
-        $header = default_header(0, $header);
+        $header = default_header(length($data), $header);
     }
     
     
-    return ($header, "");
+    return ($header, $data);
     
 }
 
@@ -339,7 +354,7 @@ sub repo_get_commands {
     my $filename = $vars{'filename'};
     my $revision = $vars{'revision'};
     
-    if ((! defined($reponame)) || (! defined($filename))) {
+    if (! defined($reponame)) {
         return;
     }
     
@@ -348,10 +363,11 @@ sub repo_get_commands {
     }
     
     
-    
     given(get_parent_command($command)) {
         when("revision") {
             print "Processing 'revision' Request\n";
+            return if ! defined($filename);
+            
             my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
             if (! -f $file) {
                 return;
@@ -374,6 +390,7 @@ sub repo_get_commands {
         }
         when ("checkout") {
             print "Processing 'checkout' Request\n";
+            return if ! defined($filename);
             my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
             
             if (! -f $file) {
@@ -403,6 +420,7 @@ sub repo_get_commands {
         }
         when("revisions") {
             print "Processing 'revisions' Request\n";
+            return if ! defined($filename);
             @tmp_lines = print_revisions_to_array($MYCVS_REPO_STORE.'/'.$reponame.$filename);
             
             if (!@tmp_lines) {
@@ -417,6 +435,7 @@ sub repo_get_commands {
         }
         when("timestamp") {
             print "Processing 'timestamp' Request\n";
+            return if ! defined($filename);
             my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
             $timestamp = get_timestamp($file, $revision);
             
@@ -430,10 +449,7 @@ sub repo_get_commands {
         when("filelist") {
             print "Processing 'filelist' Request\n";
             my @tmp_lines = get_dir_contents_recur($MYCVS_REPO_STORE.'/'.$reponame);
-            use Data::Dumper;
-            print Dumper @tmp_lines;
             foreach my $line(@tmp_lines) {
-                print "OK";
                 $content .= $line."\n";
             }
             $header = "";
@@ -450,8 +466,8 @@ sub repo_delete_commands {
     my ($command, $user, %vars) = @_;
     my $reponame = $vars{'reponame'};
     my $username = $vars{'username'};
-    my $header;
-    
+    my ($header, $content);
+
        
     if (! is_user_admin($user)) {
         return (get_auth_message(), "");
@@ -460,10 +476,16 @@ sub repo_delete_commands {
     given($command) {
         when("/del") {
             print "Processing 'del' Request\n";
-            # Delete Repository
+            return if !defined($reponame);
+            if (remove_local_repo($reponame)) {
+                $header = "";
+                $content = "Successfully remove repo: '$reponame'\n";
+            } else {
+                return;
+            }
         }
         when("/user/del") {
-            print "Processing 'user/del' Request\n";
+            print "Processing '/user/del' Request\n";
             # Revoke user permission on repository
         }
         default {
@@ -471,7 +493,7 @@ sub repo_delete_commands {
             return;
         }
     }
-    return $header;
+    return ($header, $content);
 }
 
 sub repo_post_commands {
@@ -505,6 +527,15 @@ sub repo_post_commands {
         }
         when("/add") {
             print "Processing 'add' Request\n";
+            if (!defined($reponame)) {
+                return;
+            }
+            
+            if (!create_local_repo($reponame)) {
+                return already_exists_message($reponame, "");
+            }
+            $header = "";
+            
         }
         when("/user/add") {
             print "Processing '/user/add' Request\n";
