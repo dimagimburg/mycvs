@@ -51,7 +51,7 @@ sub init{
 sub init_global {
     # Create global configuration dir that will hold all the db files
     check_and_create_dir($MYCVS_GLOBAL_BASEDIR);
-    check_and_create_dir(check_and_create_dir($MYCVS_DB_FOLDER));
+    check_and_create_dir($MYCVS_DB_FOLDER);
     init_users_db();
     init_groups_db();
     init_admins_db();
@@ -137,7 +137,7 @@ sub check_and_create_dir {
             make_path($dir) or die "Couldn't create dir '$dir'. Please verify that directory is writable.\n";
         }
     } else {
-        die "Something went wrong. Received '$dir' as dirname.";
+        die "Something went wrong. Received '$dir' as dirname.\n";
     }
 }
 
