@@ -178,13 +178,13 @@ sub exists_group{
 # Returns list of groups that user belongs to
 sub get_user_groups {
     my ($user_name) = @_;
+    my @groups = ();
     if(exists_user($user_name)){
-        my @groups = ();
         my $groups_file = $MYCVS_GROUPS_DB;
-        open (my $fh,  '<', $groups_file ) || die "Can't open $infile $!\n"; # read
+        open (my $fh,  '<', $groups_file ) || die "Can't open $groups_file $!\n"; # read
         while (my $row = <$fh>){
-            my $group = split(/:/,$row,2)[0];
-            my $users = split(/:/,$row,2)[1];
+            my $group = (split(/:/,$row,2))[0];
+            my $users = (split(/:/,$row,2))[1];
             if($users =~ /$user_name/){
                 push(@groups,$group);
             }
@@ -265,8 +265,8 @@ sub remove_user_from_group {
                 if($row_splited[0] eq $group_name){
                     # group name found, now check if user already exsists in group
                     if($row_splited[1] =~ /$user_name/){
-                        my $new_row = $row_splited =~ s/$user_name//g
-                        $new_row =~ s/:://g
+                        my $new_row = $row_splited[1] =~ s/$user_name//g;
+                        $new_row =~ s/:://g;
                         print $out $new_row;
                     }
                 } else {
@@ -292,6 +292,7 @@ sub remove_user_from_group {
 
 # Removes group from DB.
 sub remove_group {
+    my ($group_name) = @_;
     if(exists_group($group_name)){
         # group exists in groups.db
         my @row_splited;
@@ -386,7 +387,7 @@ sub exists_base_dir {
 # check if user exists in given group
 sub exist_user_in_group {
     my ($username, $groupname) = @_;
-    $groups_db_path = $MYCVS_GROUPS_DB;
+    my $groups_db_path = $MYCVS_GROUPS_DB;
     my $group_pattern = "^$groupname";
 
     open(my $fh, '<:encoding(UTF-8)', $groups_db_path);
@@ -396,7 +397,7 @@ sub exist_user_in_group {
         if($row =~ /$group_pattern/){
             # group found
             my @users = split(':',$row);
-            foreach $user (@user){
+            foreach my $user (@users){
                 if($username eq $user) { return 1; }
             }
             return 0;
@@ -419,7 +420,6 @@ sub is_user_admin {
 
 sub create_admin_user {
     my ($username) = @_;
-    use Data::Dumper;
     my @admins = list_admin_users();
     
     if (!is_user_admin($username)) {

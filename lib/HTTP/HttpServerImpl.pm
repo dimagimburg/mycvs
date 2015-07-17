@@ -352,16 +352,21 @@ sub repo_get_commands {
     given(get_parent_command($command)) {
         when("revision") {
             print "Processing 'revision' Request\n";
-            ($timestamp, @tmp_lines) = get_merged_plain_file($MYCVS_REPO_STORE.'/'.$reponame.$filename, $revision);
-            if (!@tmp_lines) {
+            my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
+            if (! -f $file) {
                 return;
             }
             
-            if (defined($timestamp)) {
-                $header = "Time-Stamp: ".$timestamp."\r\n";
-            } else {
-                $header = "";
+            ($timestamp, @tmp_lines) = get_merged_plain_file($file, $revision);
+            if (! @tmp_lines) {
+                return;
             }
+            
+            
+            if (!defined($timestamp)) {
+                $timestamp = 0;
+            }
+            $header = "Time-Stamp: ".$timestamp."\r\n";
             
             foreach my $line(@tmp_lines) {
                 $content .= $line;
@@ -382,12 +387,15 @@ sub repo_get_commands {
             }
             
             ($timestamp, @tmp_lines) = make_checkout($file, $revision);
-            
-            if (defined($timestamp)) {
-                $header = "Time-Stamp: ".$timestamp."\r\n";
-            } else {
-                $header = "";
+            if (! @tmp_lines) {
+                return;
             }
+            
+            
+            if (!defined($timestamp)) {
+               $timestamp = 0;
+            }
+            $header = "Time-Stamp: ".$timestamp."\r\n";
             
             foreach my $line(@tmp_lines) {
                 $content .= $line;
@@ -493,7 +501,6 @@ sub repo_post_commands {
             make_checkin($real_file_path);
             
             unlock_file($real_file_path);
-            delete_file($real_file_path);
             $header = "";
         }
         when("/add") {

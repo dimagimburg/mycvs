@@ -13,6 +13,7 @@ use Exporter qw(import);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 get_remote_revisions get_remote_plain_diff
+                get_remote_checkout post_remote_checkin
                 );
 
 # Internal libs
@@ -20,6 +21,7 @@ use lib qw(../);
 use HTTP::Tiny;
 use RepoManagement::Init;
 use VersionManagement::Impl;
+use RepoManagement::Configuration qw($MYCVS_REMOTE_SUFFIX);
 
 our %http_options = (
                     timeout => 10
@@ -47,7 +49,8 @@ our %delete_commands = (
 #parse_config_line
 
 sub send_http_request {
-    my ($method, $command, $vars) = @_;
+    my ($method, $command, $vars, $data) = @_;
+    my $response;
     my $http = HTTP::Tiny->new(%http_options);
     my %options = parse_config_line(getcwd());
     my $uri = "http://$options{user}:$options{pass}@";
@@ -55,7 +58,21 @@ sub send_http_request {
     $uri .= "$options{host}:$options{port}";
     $uri .= "$command?";
     $uri .= "$vars";
-    my $response = $http->request($method, $uri);
+    
+    if (!defined($data)) {
+        $response = $http->request($method, $uri);
+    } else {
+        $response = $http->request(
+                                $method,
+                                $uri => {
+                                    content => $data,
+                                    headers => {
+                                        "Content-Type" => "text/plain"
+                                    }
+                                }
+                            );
+    }
+    
     print Dumper $response;
     return ($response->{content}, %{$response->{headers}}) if $response->{status} eq 200;
     die "Requested resourse not Found.\n" if $response->{status} eq 404;
@@ -106,8 +123,8 @@ sub get_remote_revisions {
 
 sub get_remote_plain_diff {
     my ($file_path, $revision) = @_;
-    my ($vars, $response, $temp_file_path, $local_file_path, @file_lines, %headers);
-    
+    my ($vars, $response, $temp_file_path, $local_file_path);
+    my (@diff, @file_lines, %headers);
     if (! check_http_prerequisites($file_path)) {
         return;
     }
@@ -115,7 +132,7 @@ sub get_remote_plain_diff {
     my $reporoot = get_repo_root($file_path);
     
     $local_file_path = $file_path;
-    $temp_file_path = $file_path.'.remote_copy';
+    $temp_file_path = $file_path.'.'.$MYCVS_REMOTE_SUFFIX;
     $file_path =~ s/${reporoot}//;
     $vars = "reponame=".$options{reponame}."&filename=".$file_path;
     
@@ -127,9 +144,10 @@ sub get_remote_plain_diff {
     return if ! defined($response);
     
     save_string_to_new_file($response, $temp_file_path);
+    @diff = get_diff_on_two_files($temp_file_path, $local_file_path);
+    print Dumper \@diff;
     delete_file($temp_file_path);
-    
-    return get_diff_on_two_files($temp_file_path, $local_file_path);
+    return @diff;
 }
 
 sub get_remote_checkout {
@@ -141,9 +159,10 @@ sub get_remote_checkout {
     }
     my %options = parse_config_line($file_path);
     my $reporoot = get_repo_root($file_path);
+    my $timestamp;
     
     $local_file_path = $file_path;
-    $temp_file_path = $file_path.'.remote_copy';
+    $temp_file_path = $file_path.'.'.$MYCVS_REMOTE_SUFFIX;
     $file_path =~ s/${reporoot}//;
     $vars = "reponame=".$options{reponame}."&filename=".$file_path;
     
@@ -154,5 +173,42 @@ sub get_remote_checkout {
     return if ! defined($response);
     
     save_string_to_new_file($response, $temp_file_path);
-    set_file_time($temp_file_path, $headers{'time-stamp'})
+    set_file_time($temp_file_path, $headers{'time-stamp'});
 }
+
+sub post_remote_checkin {
+    my ($file_path) = @_;
+    my ($data, $vars, $response, $local_file_path, @file_lines, %headers);
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    my %options = parse_config_line($file_path);
+    my $reporoot = get_repo_root($file_path);
+    my $timestamp;
+    
+    $local_file_path = $file_path;
+    $file_path =~ s/${reporoot}//;
+    $vars = "reponame=".$options{reponame}."&filename=".$file_path;
+    
+    @file_lines = read_lines_from_file($local_file_path);
+    if (! @file_lines) {
+        return;
+    }
+    $data = join('', @file_lines);
+    
+    
+    ($response, %headers) = send_http_request('POST', $post_commands{checkin}, $vars, $data);
+    return if ! defined($response);
+    return 1;
+}
+
+
+
+
+
+
+
+
+
+>>>>>>> vitalis_devel

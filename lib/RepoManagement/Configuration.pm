@@ -7,10 +7,11 @@ our @EXPORT_OK = qw(
                     $MYCVS_GLOBAL_BASEDIR $MYCVS_GLOBAL_CONFIG_LOC
                     $MYCVS_USERS_DB $MYCVS_GROUPS_DB $MYCVS_DB_FOLDER
                     $MYCVS_HTTP_PORT $MYCVS_REPO_STORE $MYCVS_CONFIG_NAME
-                    $MYCVS_ADMINS_DB
+                    $MYCVS_ADMINS_DB $MYCVS_REMOTE_SUFFIX
                     );
 ##################Client Configuration vars###################
 our $MYCVS_CONFIG_NAME = qw(config);
+our $MYCVS_REMOTE_SUFFIX = qw(remote_copy);
 ##################Server Configuration Vars###################
 # MYCVS_GLOBAL_BASEDIR repository independent
 our $MYCVS_GLOBAL_BASEDIR = $ENV{HOME}.qw(/mycvs);

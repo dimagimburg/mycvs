@@ -27,7 +27,7 @@ sub start_server {
     print "MyCVS WebServer listening on ".($server->port)."...\n";
     while (my $client=($server->socket)->accept()){
         print "Got Request from '".$client->peerhost."'.\n";
-        my ($cgi_vars, $user, $pass, $header, $request, $data);
+        my ($user, $pass, $header, $request, $data);
     
         ($request, $data) = HTTP::HttpServerImpl::get_request_params($server->type, $client);
         if (!defined($request) && !defined($data)) {
