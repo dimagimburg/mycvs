@@ -4,6 +4,7 @@ use strict; use warnings;
 
 # Perl libs & vars
 use File::Basename;
+use File::Copy qw(move);
 use Exporter qw(import);
 use Cwd;
 use Cwd qw(realpath);
@@ -16,15 +17,19 @@ our @EXPORT = qw(
 use lib qw(../);
 use VersionManagement::Impl;
 use HTTP::HttpServerRequests;
+use RepoManagement::Configuration qw($MYCVS_REMOTE_SUFFIX);
 
 # Checks in file. If first checkin uses function checkin_first.
 # also creates $filename.rev_num.diff. File will include reverse diff of file
 # + TimeStamp of date when created.
 sub checkin_file {
     my ($file_path) = @_;
-    die "'$file_path' $!.\n" if (! -f $file_path);
+    die "You must provide at least filename to this command.\n" if ! defined $file_path;
+    die "Local file not found.\n" if ! -f $file_path;
     
-    make_checkin($file_path);
+    if (!post_remote_checkin(realpath($file_path))) {
+        die "Can't checkin.\n";
+    }
 }
 
 # Checkouts file from repository at given revision.
@@ -33,18 +38,20 @@ sub checkin_file {
 sub checkout_file {
     my ($file_path, $revision) = @_;
     die "You must provide at least filename to this command.\n" if ! defined $file_path;
-    print "Local file not found. Trying to get from remote.\n" if ! -f $file_path;
+    print "Local file not found. Trying to get from remote...\n" if ! -f $file_path;
+    
+    get_remote_checkout(realpath($file_path), $revision);
     
     if (-f $file_path) {
-        #code
+        print "Do you want to overwrite existing file?[y/n] (y - default) ";
+        my $answer = <STDIN>; chomp $answer;
+        if ($answer ne "n") {
+            delete_file($file_path);
+            move ($file_path.'.'.$MYCVS_REMOTE_SUFFIX, $file_path);
+        }
+    } else {
+        move ($file_path.'.'.$MYCVS_REMOTE_SUFFIX, $file_path);
     }
-    
-    #my ($timestamp, @lines_array) = make_checkout($file_path, $revision);
-    #if ((!defined($timestamp)) || (@lines_array)) {
-    #    die "Revision: '$revision' does not exists.\n";
-    #}
-    #save_lines_array_to_file(\@lines_array, $file_path);
-    #set_file_time($file_path, $timestamp);
 }
 
 
@@ -53,6 +60,9 @@ sub checkout_file {
 # If revision not defined users last revision.
 sub print_revision_diff  {
     my ($file_path, $revision) = @_;
+    if (! defined($file_path) && defined($revision)) {
+        die "You need to specify filename.\n";
+    }
     
     die "No file given.\n" if ! defined($file_path);
     die "Given file not exists.\n" if ! -f $file_path;

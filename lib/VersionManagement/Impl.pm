@@ -3,6 +3,7 @@ package VersionManagement::Impl;
 use strict; use warnings;
 
 # Perl libs & vars
+use Data::Dumper;
 use File::Basename;
 use File::Find;
 use File::Copy qw(copy);
@@ -65,9 +66,6 @@ sub get_merged_plain_file {
         return;
     }
     ($timestamp, @lines) = make_checkout($file_path, $revision);
-    #@lines = read_lines_from_file($file_path);
-    #$timestamp = get_file_time($file_path);
-    unlink $file_path;
     
     return ($timestamp, @lines);
 }
@@ -84,6 +82,7 @@ sub make_checkout {
     if (! defined($revision)) {
         # Will get the latest file if available.
         $revision = 1;
+        $revision = $revisions[-1] if @revisions;
     }
     
     if (grep (/^$revision$/, @revisions)) {
@@ -91,14 +90,11 @@ sub make_checkout {
         my $latest_diff = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revisions[-1].'.diff';
         my $given_diff = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revision.'.diff';
         
-        copy $latest_diff, $file_path or die "Cant\'t find one of the revisions.\n";
+        #copy $latest_diff, $file_path or die "Cant\'t find one of the revisions.\n";
         
         my @latest_lines = read_lines_from_file($file_path);
         my @diff_to_merge = get_diff($file_path, $revision);
         @merged_file = merge_back_diff_on_file(\@latest_lines, \@diff_to_merge);
-        #save_lines_array_to_file(\@merged_file, $file_path);
-        #$timestamp = get_file_time($given_diff);
-        #set_file_time($file_path, get_file_time($given_diff));
         $timestamp = get_file_time($given_diff);
     } else {
         return;
