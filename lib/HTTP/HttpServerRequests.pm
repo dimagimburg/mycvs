@@ -209,6 +209,4 @@ sub post_remote_checkin {
 
 
 
-
-
->>>>>>> vitalis_devel
+1;
