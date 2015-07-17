@@ -24,6 +24,7 @@ our @EXPORT = qw(
                 logout_user get_session exists_user generate_pass_hash
                 exist_user_in_group is_user_admin create_admin_user
                 list_users create_admin_user create_user_record_silent
+                remove_user
                 );
                 
 # Internal libs
@@ -76,7 +77,7 @@ sub create_user_record_silent {
         # file user.db exists
         if(exists_user($user_name)){
             # username entered already exists, show error message
-            return 0;
+            return 2;
         } else {
             # file exists, new user, add user to file
             append_user_to_users_db_file($user_name,$pass_hash);
@@ -92,7 +93,7 @@ sub create_user_record_silent {
             # CANT ADD USER WHEN THERE IS NO .MYCVS INITIALIZED IN OPT
             # SEE WHAT IS THE SOLUTION
             print "repository is not initialized.\n";
-            return 2;
+            return 0;
         }
     }
 }
@@ -460,11 +461,12 @@ sub is_user_admin {
     my ($username) = @_;
     my @admins = list_admin_users();
     foreach my $admin(@admins) {
+        chomp $admin;
         if ($admin eq $username) {
-            return 0;
+            return 1;
         }
     }
-    return 1;
+    return 0;
 }
 
 sub create_admin_user {
@@ -480,13 +482,38 @@ sub create_admin_user {
 }
 
 sub list_admin_users {
-    if (-f $MYCVS_ADMINS_DB) {
+    if (!-f $MYCVS_ADMINS_DB) {
         return;
     }
     my @lines = read_lines_from_file($MYCVS_ADMINS_DB);
-    return split(' ', @lines);
+    return @lines;
 }
 
+sub remove_admin {
+    my ($username) = @_;
+    chomp $username;
+    my @admins = list_admin_users();
+    my @new_admins = (); my $index = 0;
+    foreach my $admin(@admins) {
+        chomp $admin;
+        if ($admin ne $username) {
+            $new_admins[$index] = $admin."\n";
+            $index++;
+        }
+    }
+    save_lines_array_to_file(\@new_admins, $MYCVS_ADMINS_DB);
+}
 
+sub remove_user {
+    my ($username) = @_;
+    return if ! defined($username);
+    my @user_groups = get_user_groups($username);
+    
+    foreach my $group(@user_groups) {
+        remove_user_from_group($username, $group);
+    }
+    remove_admin($username);
+    return 1;
+}
 
 1;

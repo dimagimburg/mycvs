@@ -17,6 +17,7 @@ our @EXPORT = qw(
                 get_remote_repo_content post_create_remote_repo
                 delete_remote_repo delete_remote_repo_perm
                 post_remote_repo_perm post_remote_add_user
+                post_remote_user_del
                 );
 
 # Internal libs
@@ -320,6 +321,26 @@ sub post_remote_add_user {
     
     ($response, %headers) = send_http_request('POST',
                                               $post_commands{create_user},
+                                              $vars);
+    return $response;
+}
+
+sub post_remote_user_del {
+    my ($user) = @_;
+    my ($vars, $response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    if (!defined($user)) {
+        return;
+    }
+    
+    $vars = "username=".$user;
+    
+    ($response, %headers) = send_http_request('DELETE',
+                                              $delete_commands{delete_user},
                                               $vars);
     return $response;
 }

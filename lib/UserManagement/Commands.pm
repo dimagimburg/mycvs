@@ -23,7 +23,8 @@ use HTTP::HttpServerRequests;
 
 # Interactive user add
 sub add_user {
-    my ($user_name,$password) = @_;
+    my ($user_name, $password) = @_;
+    my $isadmin = 'false';
     if (!defined($user_name)) {
         die "You should enter at least username to add.\n"
     }
@@ -36,17 +37,21 @@ sub add_user {
         }
     }
     print "Is this user admin?[y/n] (n - default) ";
-    my $answer = <STDIN>;
+    my $answer = <STDIN>; 
     chomp $answer;
-    UserManagement::Impl::create_user_record($user_name,$password);
+    #UserManagement::Impl::create_user_record($user_name,$password);
     if ($answer eq "y") {
-        if (create_admin_user($user_name)) {
-            print "Successfully promoted user to be ADMIN.\n";
-        } else {
-            print "User already promoted to be admin.\n";
-        }
+        $isadmin = 'true';
+    #    if (create_admin_user($user_name)) {
+    #        print "Successfully promoted user to be ADMIN.\n";
+    #    } else {
+    #        print "User already promoted to be admin.\n";
+    #    }
     }
-    
+    my $reply = post_remote_add_user($user_name,
+                                     generate_pass_hash($password),
+                                     $isadmin);
+    print $reply;
     
 }
 # Simply prints global user list
@@ -110,6 +115,17 @@ sub group_rem {
     
     delete_remote_repo($reponame);
     print "Repo: '$reponame' deleted.\n"
+}
+
+sub rem_user {
+    my ($username) = @_;
+    die "You not specified username.\n" if ! defined($username);
+    print "Are you sure to remove user: '$username'[y/n] (n - default) ";
+    my $answer = <STDIN>;
+    return if ($answer ne "y");
+    
+    post_remote_user_del($username);
+    print "User: '$username' deleted.\n"
 }
 
 1;

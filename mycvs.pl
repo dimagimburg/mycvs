@@ -60,7 +60,7 @@ sub checkout {
 sub user {
     given(shift) {
         when ('add') {UserManagement::Commands::add_user(shift,shift);}
-        when ('rem') {UserManagement::Commands::rem_user_from_group(shift);}
+        when ('rem') {UserManagement::Commands::rem_user(shift);}
         when ('list') {UserManagement::Commands::list_users();}
         when ('repo') {
             given(shift) {

@@ -348,7 +348,11 @@ sub lock_file {
 
 sub unlock_file {
     my ($file_path) = @_;
-    delete_file($file_path);
+    if (!defined($file_path)) {
+        return;
+    }
+    
+    delete_file(get_lock_file($file_path));
 }
 
 # Checks if file locked.
@@ -363,6 +367,7 @@ sub is_file_locked {
 
 sub get_lock_file {
     my ($filename) = @_;
+    #return if ! defined($filename);
     my @files = ();
     my $dir = dirname($filename);
     $filename = basename($filename);
@@ -374,7 +379,7 @@ sub get_lock_file {
     
     opendir(dir_handle, $dir);
     
-    @files = grep {/${filename}\.lock/} readdir dir_handle;
+    @files = grep {/\Q${filename}.lock\E/} readdir dir_handle;
     
     closedir(dir_handle);
     if (@files) {
@@ -387,11 +392,12 @@ sub get_lock_file {
 # returns username of user that locked file.
 sub get_locked_user {
     my ($file_path) = @_;
-    my $username;
+    my ($username, @splitted);
     
     if (is_file_locked($file_path)) {
         my $lockfile = get_lock_file($file_path);
-        $username = (split('\.', $lockfile))[2];
+        @splitted = split('\.', $lockfile);
+        $username = $splitted[-1];
         return $username;
     } else {
         return;
@@ -400,6 +406,7 @@ sub get_locked_user {
 
 sub delete_file {
     my ($file_path) = @_;
+    return if !defined $file_path;
     if (-f $file_path) {
         unlink $file_path;
     }

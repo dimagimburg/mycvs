@@ -169,7 +169,7 @@ sub bad_request_message {
 
 sub file_locked_message {
     my ($repo, $file_path, $user) = @_;
-    my $body = "Given file: $file_path in Repo: $repo locked by user: $user.\r\n";
+    my $body = "Given file: $file_path in Repo: '$repo' locked by user: '$user'.\r\n";
     my $header = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n";
     my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
     my $message = $header.$content_len.$body;
@@ -225,7 +225,7 @@ sub process_post {
         $header = file_locked_message($vars{'reponame'}, $vars{'filename'});
     } elsif (defined($header) && !defined($content)) {
         $data = "";
-    } else {
+    } elsif ($header eq "" && $content eq "") {
         $header = default_header(length($content), $header);
     }
     
@@ -525,9 +525,8 @@ sub repo_post_commands {
                 return get_auth_message();
             }
             my $real_file_path = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
-            
-            if ((is_file_locked($real_file_path)) && ($user ne get_locked_user())) {
-                return file_locked_message($reponame, $filename);
+            if (is_file_locked($real_file_path) && $user ne get_locked_user($real_file_path)) {
+                return (file_locked_message($reponame, $filename, get_locked_user($real_file_path)), "");
             }
             
             save_string_to_new_file($data, $real_file_path);
@@ -593,61 +592,73 @@ sub repo_post_commands {
 
 sub user_post_commands {
     my ($command, $user, %vars) = @_;
-    my $reponame = $vars{'reponame'};
-    my $filename = $vars{'filename'};
-    my $revision = $vars{'revision'};
     my ($header, $content);
     
-    if ($command eq '/add') {
-        print "Processing '/add' Request\n";
-        if (! is_user_admin($user)) {
-            return (get_auth_message(), "");
-        }
-        my $username = $vars{'username'};
-        my $passhash = $vars{'pass'};
-        my $isAdmin = $vars{'admin'};
-        
-        if (!defined($username) || !defined($passhash)) {
-            return;
-        }
-        if (!defined($isAdmin)) {
-            $isAdmin = 'false';
-        }
-        my $err = create_user_record_silent($username, $passhash);
-        if ($err eq 1) {
-            if ($isAdmin eq "true") {
-                create_admin_user($username);
+    given ($command) {
+        when ("/add") {
+            print "Processing '/add' Request\n";
+            if (! is_user_admin($user)) {
+                return (get_auth_message(), "");
             }
-            $content = "Successfully added user: $username\n";
-            $header = "";
-        } elsif ($err eq 2) {
-            $header = already_exists_message("User: '$username' already exists.\n");
-        } else {
+            my $username = $vars{'username'};
+            my $passhash = $vars{'pass'};
+            my $isAdmin = $vars{'admin'};
+            
+            if (!defined($username) || !defined($passhash)) {
+                return;
+            }
+            if (!defined($isAdmin)) {
+                $isAdmin = 'false';
+            }
+            my $err = create_user_record_silent($username, $passhash);
+            if ($err eq 1) {
+                if ($isAdmin eq "true") {
+                    create_admin_user($username);
+                }
+                $content = "Successfully added user: $username\n";
+                $header = "";
+            } elsif ($err eq 2) {
+                $header = already_exists_message("User: '$username' already exists.\n");
+                if ($isAdmin eq "true") {
+                    create_admin_user($username);
+                }
+                $content ="";
+            } else {
+                return;
+            }
+        }
+        default {
             return;
         }
-        
-        
-    } else {
-        return;
     }
-    
-    
-    
     return ($header, $content);
 }
 sub user_delete_commands {
     my ($command, $user, %vars) = @_;
-    my $reponame = $vars{'reponame'};
-    my $filename = $vars{'filename'};
-    my $revision = $vars{'revision'};
-    my $header;
+    my ($header, $content);
     
-    if ($command eq '/del') {
-        #code
+    given($command) {
+        when("/del") {
+            print "Processing '/del' Request\n";
+            if (! is_user_admin($user)) {
+                return (get_auth_message(), "");
+            }
+            my $username = $vars{'username'};
+            if (!defined($username)) {
+                return;
+            }
+            if (remove_user($username)) {
+                $content = "";
+            }
+            $header = ""; 
+        }
+        default {
+            return;
+        }
     }
     
     
-    return $header;
+    return ($header, $content);
 }
 
 sub authorize_user {
