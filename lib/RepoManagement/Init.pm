@@ -24,29 +24,6 @@ use RepoManagement::Configuration qw(
 use UserManagement::Impl;
 use VersionManagement::Impl;
 
-# Initialize a new Server config with username and password for admin
-# sub init{
-#     my($username,$password) = @_;
-
-#     # HERE INITIALIZE ALL THE LOCAL AND GLOBAL IF NECCESSARTY
-
-#     if(exists_user($username)){
-#         # user exists
-#         if(get_pass_hash($username) eq generate_pass_hash($password)){
-#             print "user ok pass ok\n";
-#             print "create repository with admin and password and ask to login to open admin session";
-#         } else {
-#             print "password for user $username is incorrect\n";
-#         }
-#     } else {
-#         print "user: $username not exists in user.db\n";      
-#     }
-# }
-
-sub init{
-    init_local(getcwd());
-}
-
 # Create global dir tree
 sub init_global {
     # Create global configuration dir that will hold all the db files

@@ -20,7 +20,6 @@ use UserManagement::Commands;
 use HTTP::HttpServer;
 
 given(shift(@ARGV)) {
-    when ('init'){ init(shift(@ARGV),shift(@ARGV)); }
     when ('diff') {
         my $revision;
         GetOptions('-r=i' => \$revision) or die usage();
@@ -43,10 +42,6 @@ given(shift(@ARGV)) {
 
 sub diff {
     VersionManagement::Commands::print_revision_diff(shift, shift);
-}
-
-sub init {
-    RepoManagement::Init::init(shift,shift);
 }
 
 sub checkin {
