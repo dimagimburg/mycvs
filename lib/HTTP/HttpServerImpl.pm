@@ -705,16 +705,4 @@ sub parse_vars {
     return %vars;
 }
 
-sub check_if_admin_file_exists{
-    if (-e $MYCVS_DB_FOLDER."/admins.db") { return 1 }
-    return 0;
-}
-
-sub check_if_admin_exists{
-    if (-s $MYCVS_DB_FOLDER."/admins.db") {
-        return 1;
-    }
-    return 0;
-}
-
 1;

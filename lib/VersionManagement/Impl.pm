@@ -19,6 +19,7 @@ our @EXPORT = qw(
                 delete_file get_dir_contents_recur print_revisions_to_array
                 get_diff_on_two_files
                 );
+use RepoManagement::Configuration qw($MYCVS_DB_FOLDER);
 
 # Checks in file. If first checkin uses function checkin_first.
 # also creates $filename.rev_num.diff. File will include reverse diff of file
@@ -457,6 +458,18 @@ sub print_revisions_to_array {
         return;
     }
     return @lines;
+}
+
+sub check_if_admin_file_exists{
+    if (-e $MYCVS_DB_FOLDER."/admins.db") { return 1 }
+    return 0;
+}
+
+sub check_if_admin_exists{
+    if (-s $MYCVS_DB_FOLDER."/admins.db") {
+        return 1;
+    }
+    return 0;
 }
 
 1;
