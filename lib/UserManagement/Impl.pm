@@ -194,7 +194,7 @@ sub create_group_record {
 sub append_group_to_groups_db_file {
     my($group_name) = @_;
     open(my $fh, '>>', $MYCVS_GROUPS_DB) or die "\n\nerror opening groups.db file\n\n";
-    print $fh "$group_name:\n";
+    print $fh "$group_name\n";
     close($fh);
 }
 
@@ -241,6 +241,7 @@ sub get_user_groups {
 # Adds user to group. If group not exists prints error
 sub add_user_to_group_impl {
     my ($user_name, $group_name) = @_;
+    my $status = 0;
     if(exists_user($user_name)){
         # user exists in users.db
         if(exists_group($group_name)){
@@ -255,19 +256,22 @@ sub add_user_to_group_impl {
 
             while (my $row = <$in>){   
                 @row_splited = split(/:/,$row,2); # get the group name from beggining of the line in groups.db
+                chomp $row_splited[0];
                 if($row_splited[0] eq $group_name){
                     # group name found, now check if user already exsists in group
-                    if($row_splited[1] =~ /$user_name/){
+                    if(defined $row_splited[1] && $row_splited[1] =~ /$user_name/){
                         # user name already exists in group, keep moving on
                         # print "user: $user_name is already in group: $group_name\n";
                         print $out $row;
-                        return 2;
+                        $status = 2;
+                        #return 2;
                     } else {
                         # user addition to group
                         chomp $row;
-                        print $out $row.','.$user_name."\n";
+                        print $out $row.':'.$user_name."\n";
                         # print "user: $user_name added successfully to group: $group_name\n";
-                        return 1;
+                        #return 1;
+                        $status = 1;
                     }
                 } else {
                     # group name not found keep on the loop
@@ -277,9 +281,10 @@ sub add_user_to_group_impl {
 
             close ($in);
             close ($out);
-            unlink $infile;
-            move ($outfile, $infile) || die "Unable to rename: $!"; # rename the temp file to the original file.
-            return 1;
+            #unlink $infile;
+            #print "\n\n\n$outfile\n\n$infile\n\n\n";
+            rename ($outfile, $infile) || die "Unable to rename: $!"; # rename the temp file to the original file.
+            return $status;
         } else {
             # wrong group name
             # print "group: $group_name not exists.\n";
