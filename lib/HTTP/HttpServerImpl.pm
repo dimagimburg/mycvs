@@ -150,7 +150,6 @@ sub get_auth_message {
     return $header;
 }
 
-
 sub not_supported_message {
     my ($request) = @_;
     my $body = "Command: $request not supported\r\n";
@@ -159,6 +158,7 @@ sub not_supported_message {
     my $message = $header.$content_len.$body;
     return $message;
 }
+
 sub bad_request_message {
     my $body = "Mallformed HTTP Request\r\n";
     my $header = "HTTP/1.0 400 Bad request\r\nContent-Type: text/plain\r\n";
@@ -545,9 +545,14 @@ sub repo_post_commands {
                 return;
             }
             
-            if (create_local_repo($reponame) == 2) {
+            my $create_local_error = create_local_repo($reponame);
+
+            if ($create_local_error == 2) {
                 return already_exists_message("Given repo: '$reponame' already exists.\r\n");
+            } elsif ($create_local_error == 0){
+                return not_supported_message("Mycvs is not initialized.\r\n");
             }
+
             $header = "";
             $content = "";
             
