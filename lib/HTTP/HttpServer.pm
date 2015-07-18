@@ -93,25 +93,22 @@ sub check_config {
     init_global();
     my $admin;
     my $password;
-    if(VersionManagement::Impl::check_if_admin_file_exists()){
-        if(!VersionManagement::Impl::check_if_admin_exists()){
-            my $answer = 0;
-            while($answer != 1){
-                print "Please enter admin user name:\n";
-                $admin = <STDIN>; chomp $admin;
-                print "Please enter admin password:\n";
-                $password = <STDIN>; chomp $password;
-                $answer = UserManagement::Impl::create_user_record($admin,$password);
-                if($answer == 0){
-                    print "ERROR";
-                } elsif($answer == 2) {
-                    print "user already exists\n";
-                }
+    my @admin_list = list_admin_users();
+    if (! @admin_list) {
+        my $answer = 0;
+        while($answer != 1){
+            print "Please enter admin user name:\n";
+            $admin = <STDIN>; chomp $admin;
+            print "Please enter admin password:\n";
+            $password = <STDIN>; chomp $password;
+            $answer = UserManagement::Impl::create_user_record($admin,$password);
+            if($answer == 0){
+                print "ERROR";
+            } elsif($answer == 2) {
+                print "user already exists\n";
             }
-            UserManagement::Impl::create_admin_user($admin);
         }
-    } else {
-        print "error -> initialized incorrectly, admins.db no found.\n";
+        create_admin_user($admin);
     }
 }
 
