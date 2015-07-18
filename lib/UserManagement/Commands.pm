@@ -50,7 +50,7 @@ sub add_user {
             }
         }
     } elsif($status == 2) {
-        print "user $user_name already exists";
+        print "user $user_name already exists\n";
     }
     
     my $reply = post_remote_add_user($user_name,

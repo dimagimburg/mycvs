@@ -12,7 +12,7 @@ use feature qw(switch);
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 use lib qw(../);
-use RepoManagement::Configuration qw($MYCVS_REPO_STORE $MYCVS_GLOBAL_BASEDIR);
+use RepoManagement::Configuration qw($MYCVS_REPO_STORE $MYCVS_GLOBAL_BASEDIR $MYCVS_DB_FOLDER);
 use RepoManagement::Init;
 use UserManagement::Impl;
 use VersionManagement::Impl;
@@ -688,6 +688,18 @@ sub parse_vars {
         $vars{$sv[0]} = $sv[1];
     }
     return %vars;
+}
+
+sub check_if_admin_file_exists{
+    if (-e $MYCVS_DB_FOLDER."/admins.db") { return 1 }
+    return 0;
+}
+
+sub check_if_admin_exists{
+    if (-s $MYCVS_DB_FOLDER."/admins.db") {
+        return 1;
+    }
+    return 0;
 }
 
 1;

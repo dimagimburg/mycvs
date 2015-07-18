@@ -47,7 +47,7 @@ sub create_user_record {
         # file user.db exists
         if(exists_user($user_name)){
             # username entered already exists, show error message
-            retrun 2;
+            return 2;
         } else {
             # file exists, new user, add user to file
             append_user_to_users_db_file($user_name,$pass_hash);

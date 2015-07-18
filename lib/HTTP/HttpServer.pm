@@ -19,6 +19,7 @@ use lib qw(../);
 use HTTP::HttpServerImpl;
 use RepoManagement::Init;
 use RepoManagement::Configuration qw($MYCVS_HTTP_PORT);
+use UserManagement::Impl;
 
 sub start_server {
     my $server = shift;
@@ -90,6 +91,28 @@ sub main {
 
 sub check_config {
     init_global();
+    my $admin;
+    my $password;
+    if(HTTP::HttpServerImpl::check_if_admin_file_exists()){
+        if(!HTTP::HttpServerImpl::check_if_admin_exists()){
+            my $answer = 0;
+            while($answer != 1){
+                print "Please enter admin user name:\n";
+                $admin = <STDIN>; chomp $admin;
+                print "Please enter admin password:\n";
+                $password = <STDIN>; chomp $password;
+                $answer = UserManagement::Impl::create_user_record($admin,$password);
+                if($answer == 0){
+                    print "ERROR";
+                } elsif($answer == 2) {
+                    print "user already exists\n";
+                }
+            }
+            UserManagement::Impl::create_admin_user($admin);
+        }
+    } else {
+        print "error -> initialized incorrectly, admins.db no found.\n";
+    }
 }
 
 1;
