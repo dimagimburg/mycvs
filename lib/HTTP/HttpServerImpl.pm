@@ -545,7 +545,7 @@ sub repo_post_commands {
                 return;
             }
             
-            if (!create_local_repo($reponame)) {
+            if (create_local_repo($reponame) == 2) {
                 return already_exists_message("Given repo: '$reponame' already exists.\r\n");
             }
             $header = "";

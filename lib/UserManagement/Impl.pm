@@ -47,25 +47,32 @@ sub create_user_record {
         # file user.db exists
         if(exists_user($user_name)){
             # username entered already exists, show error message
-            print "user: ".$user_name." already exists, cannot add existing user.\n";
+            retrun 2;
         } else {
             # file exists, new user, add user to file
             append_user_to_users_db_file($user_name,$pass_hash);
-            print "user: ".$user_name." successfully added.\n";
+            return 1;
         }
     } else {
         # user.db not exists
         if(exists_base_dir()){
             # /opt/.mycvs exists create file user.db and add the user
             append_user_to_users_db_file($user_name,$pass_hash);
-            print "user: ".$user_name." successfully added.\n";
+            return 1;
         } else {
             # CANT ADD USER WHEN THERE IS NO .MYCVS INITIALIZED IN OPT
             # SEE WHAT IS THE SOLUTION
-            print "repository is not initialized.\n";
+            return 0;
         }
     }
+
+    # 0 - error
+    # 1 - success
+    # 2 - already exists
 }
+
+# ----------------WHY 2 CREATE USER RECORD?----------------
+# don't want to delete one of them without knowing what i am doing.
 
 sub create_user_record_silent {
     my ($user_name, $pass_hash) = @_;
@@ -136,7 +143,7 @@ sub exists_user {
         return search_pattern_in_line_begining($username,$MYCVS_USERS_DB);
 
     } else {
-        print "please initialize mycvs.\n";
+        return 0;
     }
 }
 
@@ -144,11 +151,6 @@ sub exists_user {
 sub exists_users_db_file {
     if (-e $MYCVS_USERS_DB) { return 1 }
     return 0;
-}
-
-# Creates user db
-sub create_user_db {
-
 }
 
 ###################################################################
@@ -162,12 +164,12 @@ sub create_group_record {
         # file groups.db exists
         if(exists_group($group_name)){
             # group entered already exists, show error message
-            print "group: ".$group_name." already exists, cannot add existing group.\n";
-            return 0;
+            # print "group: ".$group_name." already exists, cannot add existing group.\n";
+            return 2;
         } else {
             # file exists, new user, add user to file
             append_group_to_groups_db_file($group_name);
-            print "group: ".$group_name." successfully added.\n";
+            # print "group: ".$group_name." successfully added.\n";
             return 1;
         }
     } else {
@@ -175,12 +177,12 @@ sub create_group_record {
         if(exists_base_dir()){
             # /opt/.mycvs exists create file groups.db and add the group
             append_group_to_groups_db_file($group_name);
-            print "group: ".$group_name." successfully added.\n";
+            # print "group: ".$group_name." successfully added.\n";
             return 1;
         } else {
             # CANT ADD USER WHEN THERE IS NO .MYCVS INITIALIZED IN OPT
             # SEE WHAT IS THE SOLUTION
-            print "repository is not initialized.\n";
+            # print "repository is not initialized.\n";
             return 0;
         }
     }
@@ -203,7 +205,7 @@ sub exists_groups_db_file{
 }
 
 # returns true if group passed in exists else false
-sub exists_group{
+sub exists_group {
     my ($group_name) = @_;
 
     if (exists_groups_db_file()) {
@@ -211,7 +213,7 @@ sub exists_group{
         return search_pattern_in_line_begining($group_name,$MYCVS_GROUPS_DB);
 
     } else {
-        print "please initialize mycvs.\n";
+        # print "please initialize mycvs.\n";
         return 0;
     }
 }
@@ -230,7 +232,8 @@ sub get_user_groups {
             }
         }
     } else {
-        print "user: $user_name not exists.\n"
+        # user not exists
+        return ();
     }
     return @groups;
 }
@@ -256,14 +259,14 @@ sub add_user_to_group_impl {
                     # group name found, now check if user already exsists in group
                     if($row_splited[1] =~ /$user_name/){
                         # user name already exists in group, keep moving on
-                        print "user: $user_name is already in group: $group_name\n";
+                        # print "user: $user_name is already in group: $group_name\n";
                         print $out $row;
                         return 2;
                     } else {
                         # user addition to group
                         chomp $row;
                         print $out $row.','.$user_name."\n";
-                        print "user: $user_name added successfully to group: $group_name\n";
+                        # print "user: $user_name added successfully to group: $group_name\n";
                         return 1;
                     }
                 } else {
@@ -279,13 +282,13 @@ sub add_user_to_group_impl {
             return 1;
         } else {
             # wrong group name
-            print "group: $group_name not exists.\n";
+            # print "group: $group_name not exists.\n";
             return 0;
         }
     } else {
         # wrong user name
-        print "user: $user_name not exists.\n";
-        return 0;
+        # print "user: $user_name not exists.\n";
+        return 2;
     }
 }
 
@@ -329,13 +332,13 @@ sub remove_user_from_group {
             return $change_flag;
         } else {
             # wrong group name
-            print "group: $group_name not exists.\n";
+            # print "group: $group_name not exists.\n";
             return 0;
         }
     } else {
         # wrong user name
-        print "user: $user_name not exists.\n";
-        return 0;
+        # print "user: $user_name not exists.\n";
+        return 2;
     }
 }
 
@@ -366,7 +369,7 @@ sub remove_group {
         return 1;
     } else {
         # wrong group name
-        print "group: $group_name not exists.\n";
+        # print "group: $group_name not exists.\n";
         return 0;
     }
 }

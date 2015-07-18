@@ -39,15 +39,20 @@ sub add_user {
     print "Is this user admin?[y/n] (n - default) ";
     my $answer = <STDIN>; 
     chomp $answer;
-    #UserManagement::Impl::create_user_record($user_name,$password);
-    if ($answer eq "y") {
-        $isadmin = 'true';
-    #    if (create_admin_user($user_name)) {
-    #        print "Successfully promoted user to be ADMIN.\n";
-    #    } else {
-    #        print "User already promoted to be admin.\n";
-    #    }
+    my $status = UserManagement::Impl::create_user_record($user_name,$password);
+    if($status == 1){
+        if ($answer eq "y") {
+            $isadmin = 'true';
+            if (create_admin_user($user_name)) {
+               print "Successfully promoted user to be ADMIN.\n";
+            } else {
+                print "User already promoted to be admin.\n";
+            }
+        }
+    } elsif($status == 2) {
+        print "user $user_name already exists";
     }
+    
     my $reply = post_remote_add_user($user_name,
                                      generate_pass_hash($password),
                                      $isadmin);
