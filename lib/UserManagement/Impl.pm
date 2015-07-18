@@ -24,7 +24,7 @@ our @EXPORT = qw(
                 logout_user get_session exists_user generate_pass_hash
                 exist_user_in_group is_user_admin create_admin_user
                 list_users create_admin_user create_user_record_silent
-                remove_user
+                remove_user list_admin_users remove_admin
                 );
                 
 # Internal libs
