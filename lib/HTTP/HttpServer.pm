@@ -93,8 +93,8 @@ sub check_config {
     init_global();
     my $admin;
     my $password;
-    if(UserManagement::Impl::check_if_admin_file_exists()){
-        if(!UserManagement::Impl::check_if_admin_exists()){
+    if(VersionManagement::Impl::check_if_admin_file_exists()){
+        if(!VersionManagement::Impl::check_if_admin_exists()){
             my $answer = 0;
             while($answer != 1){
                 print "Please enter admin user name:\n";
