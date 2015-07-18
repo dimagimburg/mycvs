@@ -26,10 +26,9 @@ sub checkin_file {
     my ($file_path) = @_;
     die "You must provide at least filename to this command.\n" if ! defined $file_path;
     die "Local file not found.\n" if ! -f $file_path;
-    
-    if (!post_remote_checkin(realpath($file_path))) {
-        die "Can't checkin.\n";
-    }
+    my $reply = post_remote_checkin(realpath($file_path));
+    die "Can't checkin.\n" if ! defined($reply);
+    print $reply;
 }
 
 # Checkouts file from repository at given revision.

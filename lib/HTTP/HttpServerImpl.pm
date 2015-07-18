@@ -530,11 +530,21 @@ sub repo_post_commands {
             }
             
             save_string_to_new_file($data, $real_file_path);
-            make_checkin($real_file_path);
+            my $err = make_checkin($real_file_path);
             
             unlock_file($real_file_path);
-            $header = "";
-            $content = "";
+            if ($err eq 2) {
+                $content = "Nothing changed in file. Nothing to checkin.\n";
+                $header = default_header(length($content), "");
+                return ("", );
+            } elsif ($err eq 3) {
+                $content = "Only timestamp changed in file. Nothing to checkin.\n";
+                $header = default_header(length($content), "");
+            } else {   
+                $header = "";
+                $content = "";
+            }
+
         }
         when("/add") {
             print "Processing 'add' Request\n";

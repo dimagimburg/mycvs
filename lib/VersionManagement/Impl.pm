@@ -39,13 +39,13 @@ sub make_checkin {
         my $prev_revision_file = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revisions[-1].'.diff';
         if (get_file_time($prev_revision_file) == get_file_time($file_path)) {
             print "Nothing changed in file. Nothing to checkin.\n";
-            return;
+            return 2;
         }
         
         my @diff_rev = get_diff_on_two_files($file_path, $prev_revision_file);
         if (! @diff_rev) {
             print "Only timestamp changed in file. Nothing to checkin.\n";
-            return;
+            return 3;
         }
         
         my $prev_time = get_file_time($prev_revision_file);

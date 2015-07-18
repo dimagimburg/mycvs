@@ -205,7 +205,7 @@ sub post_remote_checkin {
     
     ($response, %headers) = send_http_request('POST', $post_commands{checkin}, $vars, $data);
     return if ! defined($response);
-    return 1;
+    return $response;
 }
 
 sub get_remote_repo_content {
