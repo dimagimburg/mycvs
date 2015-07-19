@@ -83,12 +83,31 @@ sub list_user_groups {
     my ($user) = @_;
 }
 # Simply prints group members.
-sub list_group_members {
+sub list_remote_group_members {
     my ($group) = @_;
+    die "You must specify Repo name.\n" if !defined($group);
+    
+    my @users = get_remote_repo_members($group);
+    if (!@users) {
+        die "Given repository has no members.\n";
+    }
+    print "Listing all repository members\n";
+    print "================================\n";
+    foreach(@users) {
+        print $_."\n";
+    }
 }
 # Simply prints all existing groups.
-sub list_groups {
-    
+sub list_remote_groups {
+    my @repos = get_remote_listrepos(); 
+    if (! @repos) {
+        die "There is no repositories on server.\n";
+    }
+    print "Listing all repositories defined\n";
+    print "================================\n";
+    foreach(@repos) {
+        print $_."\n";
+    }
 }
 # Interactively adds group.
 sub group_add {

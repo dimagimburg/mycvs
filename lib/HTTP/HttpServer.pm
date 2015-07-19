@@ -97,15 +97,16 @@ sub check_config {
     if (! @admin_list) {
         my $answer = 0;
         while($answer != 1){
-            print "Please enter admin user name:\n";
+            print "Please enter admin user name: ";
             $admin = <STDIN>; chomp $admin;
-            print "Please enter admin password:\n";
+            print "Please enter admin password: ";
             $password = <STDIN>; chomp $password;
-            $answer = UserManagement::Impl::create_user_record($admin,$password);
+            $answer = create_user_record($admin,$password);
             if($answer == 0){
                 print "ERROR";
             } elsif($answer == 2) {
-                print "user already exists\n";
+                print "User already exists. Adding as admin.\n";
+                last;
             }
         }
         create_admin_user($admin);

@@ -140,14 +140,14 @@ sub default_header {
 
 # Generates authentication message
 sub get_auth_message {
-    my $error_page = "Error 401.  Unauthorized.\r\n";
-    my $length = length($error_page);
-    my $header = "HTTP/1.0 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Test\"\r\n";
+    my $body = "Error 401.  Unauthorized.\n";
+    my $header = "HTTP/1.0 401 Unauthorized\r\nContent-Type: text/plain\r\n";
+    $header .= "WWW-Authenticate: Basic realm=\"Test\"\r\n";
     $header .= "Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate, s-maxage=0\r\n";
     $header .= "Expires: 0\r\nPragma: no-cache\r\nVary: *\r\n";
-    $header .= "Content-Length: $length\r\nContent-Type: text/html\r\n\r\n";
-    $header .= $error_page;
-    return $header;
+    my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
+    my $message = $header.$content_len.$body;
+    return $message;
 }
 
 sub not_supported_message {
@@ -225,6 +225,8 @@ sub process_post {
         $header = file_locked_message($vars{'reponame'}, $vars{'filename'});
     } elsif (defined($header) && !defined($content)) {
         $content = "";
+    }  elsif ($header =~ 401) {
+        return ($header, $data);
     } elsif ($header eq "" && $content eq "") {
         $header = default_header(0, $header);
     }
@@ -264,6 +266,8 @@ sub process_get {
         $header = not_supported_message($request_path);
     } elsif (defined($header) && !defined($data)) {
         $data = "";
+    } elsif ($header =~ 401) {
+        return ($header, $data);
     } else {
         $header = default_header(length($data), $header);
     }
@@ -303,6 +307,8 @@ sub process_delete {
         $header = not_supported_message($request_path);
     } elsif (defined($header) && !defined($data)) {
         $data = "";
+    }  elsif ($header =~ 401) {
+        return ($header, $data);
     } else {
         $header = default_header(length($data), $header);
     }
@@ -354,20 +360,13 @@ sub repo_get_commands {
     my $timestamp;
     my $reponame = $vars{'reponame'};
     my $filename = $vars{'filename'};
-    my $revision = $vars{'revision'};
-    
-    if (! defined($reponame)) {
-        return;
-    }
-    
-    if (! exist_user_in_group($user, $reponame)) {
-        return (get_auth_message(), "");
-    }
-    
+    my $revision = $vars{'revision'}; 
     
     given(get_parent_command($command)) {
         when("revision") {
             print "Processing 'revision' Request\n";
+            return if ! defined($reponame);
+            return (get_auth_message(), "") if ! exist_user_in_group($user, $reponame);
             return if ! defined($filename);
             
             my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
@@ -392,7 +391,10 @@ sub repo_get_commands {
         }
         when ("checkout") {
             print "Processing 'checkout' Request\n";
+            return if ! defined($reponame);
+            return (get_auth_message(), "") if ! exist_user_in_group($user, $reponame);
             return if ! defined($filename);
+            
             my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
             
             if (! -f $file) {
@@ -422,7 +424,10 @@ sub repo_get_commands {
         }
         when("revisions") {
             print "Processing 'revisions' Request\n";
+            return if ! defined($reponame);
+            return (get_auth_message(), "") if ! exist_user_in_group($user, $reponame);
             return if ! defined($filename);
+            
             @tmp_lines = print_revisions_to_array($MYCVS_REPO_STORE.'/'.$reponame.$filename);
             
             if (!@tmp_lines) {
@@ -437,7 +442,10 @@ sub repo_get_commands {
         }
         when("timestamp") {
             print "Processing 'timestamp' Request\n";
+            return if ! defined($reponame);
+            return (get_auth_message(), "") if ! exist_user_in_group($user, $reponame);
             return if ! defined($filename);
+            
             my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
             $timestamp = get_timestamp($file, $revision);
             
@@ -450,8 +458,34 @@ sub repo_get_commands {
         }
         when("filelist") {
             print "Processing 'filelist' Request\n";
-            my @tmp_lines = get_dir_contents_recur($MYCVS_REPO_STORE.'/'.$reponame);
+            return if ! defined($reponame);
+            return (get_auth_message(), "") if ! exist_user_in_group($user, $reponame);
+            
+            @tmp_lines = get_dir_contents_recur($MYCVS_REPO_STORE.'/'.$reponame);
             foreach my $line(@tmp_lines) {
+                $content .= $line."\n";
+            }
+            $header = "";
+        }
+        when ("listrepos") {
+            print "Processing 'listrepos' Request\n";
+            @tmp_lines = list_groups();
+            foreach my $line(@tmp_lines) {
+                chomp $line;
+                $content .= $line."\n";
+            }
+            $header = "";
+        }
+        when ("members") {
+            print "Processing 'listrepos' Request\n";
+            if (!is_user_admin($user) && ! exist_user_in_group($user, $reponame)) {
+                return (get_auth_message(), "");
+            }
+            return if ! exists_group($reponame);
+            
+            @tmp_lines = list_group_members($reponame);
+            foreach my $line(@tmp_lines) {
+                chomp $line;
                 $content .= $line."\n";
             }
             $header = "";
@@ -470,7 +504,7 @@ sub repo_delete_commands {
     my $username = $vars{'username'};
     my ($header, $content);
 
-       
+    
     if (! is_user_admin($user)) {
         return (get_auth_message(), "");
     }
