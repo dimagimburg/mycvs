@@ -33,6 +33,10 @@ sub backup {
     if(exists_repo_remote($reponame)){
         print "Please enter your username:"; my $username = <STDIN>; chomp $username;
         print "Please enter you password:"; my $password = <STDIN>; chomp $password;
+        my @members = get_remote_repo_members($reponame);
+        foreach(@members) {
+        print "$_ \n";
+    } 
     } else {
         print "repo: $reponame doesn't exists on remote. \n";
     }
