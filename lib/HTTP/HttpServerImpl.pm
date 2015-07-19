@@ -224,9 +224,9 @@ sub process_post {
     } elsif ($header eq "locked") {
         $header = file_locked_message($vars{'reponame'}, $vars{'filename'});
     } elsif (defined($header) && !defined($content)) {
-        $data = "";
+        $content = "";
     } elsif ($header eq "" && $content eq "") {
-        $header = default_header(length($content), $header);
+        $header = default_header(0, $header);
     }
     
     
@@ -536,11 +536,10 @@ sub repo_post_commands {
             if ($err eq 2) {
                 $content = "Nothing changed in file. Nothing to checkin.\n";
                 $header = default_header(length($content), "");
-                return ("", );
             } elsif ($err eq 3) {
                 $content = "Only timestamp changed in file. Nothing to checkin.\n";
                 $header = default_header(length($content), "");
-            } else {   
+            } else {
                 $header = "";
                 $content = "";
             }
@@ -558,9 +557,9 @@ sub repo_post_commands {
             my $create_local_error = create_local_repo($reponame);
 
             if ($create_local_error == 2) {
-                return already_exists_message("Given repo: '$reponame' already exists.\r\n");
+                return (already_exists_message("Given repo: '$reponame' already exists.\r\n"), "");
             } elsif ($create_local_error == 0){
-                return not_supported_message("Mycvs is not initialized.\r\n");
+                return (not_supported_message("Mycvs is not initialized.\r\n"), "");
             }
 
             $header = "";
@@ -581,12 +580,14 @@ sub repo_post_commands {
             
             my $err = add_user_to_group_impl($username, $reponame);
             if ($err eq 1) {
-                $header =""; $content = "Successfully add user: '$username' to repo: '$reponame'\n";
+                $content = "Successfully add user: '$username' to repo: '$reponame'\n";
+                $header = default_header(length($content), $content);
             } elsif ($err eq 2) {
                 $header = already_exists_message("Given user: '$username' already exists in given repo: '$reponame'.\r\n");
                 $content = ""
             } else {
-                return;
+                $header = not_found_message();
+                $content = "";
             }
         }
         when("/unlock") {
@@ -625,13 +626,13 @@ sub user_post_commands {
             if (!defined($isAdmin)) {
                 $isAdmin = 'false';
             }
-            my $err = create_user_record_silent($username, $passhash);
+            my $err = create_user_record($username, $passhash);
             if ($err eq 1) {
                 if ($isAdmin eq "true") {
                     create_admin_user($username);
                 }
                 $content = "Successfully added user: $username\n";
-                $header = "";
+                $header = default_header(length($content), "");
             } elsif ($err eq 2) {
                 $header = already_exists_message("User: '$username' already exists.\n");
                 if ($isAdmin eq "true") {
@@ -663,9 +664,11 @@ sub user_delete_commands {
                 return;
             }
             if (remove_user($username)) {
+                $header = "";
                 $content = "";
+            } else {
+                return;
             }
-            $header = ""; 
         }
         default {
             return;

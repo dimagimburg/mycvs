@@ -39,20 +39,9 @@ sub add_user {
     print "Is this user admin?[y/n] (n - default) ";
     my $answer = <STDIN>; 
     chomp $answer;
-    my $status = UserManagement::Impl::create_user_record($user_name,$password);
-    if($status == 1){
-        if ($answer eq "y") {
-            $isadmin = 'true';
-            if (create_admin_user($user_name)) {
-               print "Successfully promoted user to be ADMIN.\n";
-            } else {
-                print "User already promoted to be admin.\n";
-            }
-        }
-    } elsif($status == 2) {
-        print "user $user_name already exists\n";
+    if ($answer eq "y") {
+        $isadmin = 'true';
     }
-    
     my $reply = post_remote_add_user($user_name,
                                      generate_pass_hash($password),
                                      $isadmin);
@@ -106,19 +95,26 @@ sub group_add {
     my ($reponame) = @_;
     die "Please enter reponame" if ! defined($reponame);
     
-    post_create_remote_repo($reponame);
-    print "Repo: '$reponame' created!.\n";
+    my $reply = post_create_remote_repo($reponame);
+    if (!defined($reply)) {
+        print "Can't Connect to server. Please verify you configured client.\n";
+    } else {
+        print "Repo: '$reponame' created!.\n";
+    }
 }
 # Interactively removes group.
 sub group_rem {
     my ($reponame) = @_;
-    die "Please enter reponame" if ! defined($reponame);
+    die "Please enter reponame\n" if ! defined($reponame);
     print "Are you sure to remove remote repo '$reponame'?\n";
     print "All the repo contents will be removed!!![y/n] (n - default) ";
     my $answer = <STDIN>; chomp $answer;
     return if ($answer ne "y");
     
-    delete_remote_repo($reponame);
+    my $reply = delete_remote_repo($reponame);
+    if (!defined($reply)) {
+        die "Can't Connect to server. Please verify you configured client.\n";
+    }
     print "Repo: '$reponame' deleted.\n"
 }
 
@@ -126,10 +122,13 @@ sub rem_user {
     my ($username) = @_;
     die "You not specified username.\n" if ! defined($username);
     print "Are you sure to remove user: '$username'[y/n] (n - default) ";
-    my $answer = <STDIN>;
+    my $answer = <STDIN>;chomp $answer;
     return if ($answer ne "y");
     
-    post_remote_user_del($username);
+    my $reply = post_remote_user_del($username);
+    if (!defined($reply)) {
+        die "Can't Connect to server. Please verify you configured client.\n";
+    }
     print "User: '$username' deleted.\n"
 }
 
