@@ -25,6 +25,7 @@ our @EXPORT = qw(
                 exist_user_in_group is_user_admin create_admin_user
                 list_users create_admin_user create_user_record_silent
                 remove_user list_admin_users remove_admin exists_group
+                list_groups list_group_members
                 );
                 
 # Internal libs
@@ -187,7 +188,7 @@ sub exists_group {
     return 0 if ! @group_lines;
     
     foreach my $group(@group_lines) {
-        return 1 if $group =~ /^${group_name}/;
+        return 1 if $group =~ /^${group_name}:/;
     }
     return 0;
 }
@@ -211,7 +212,36 @@ sub get_user_groups {
     }
     return @groups;
 }
+# get all defined groups
+sub list_groups {
+    my @groups = ();
+    my @group_lines = read_lines_from_file($MYCVS_GROUPS_DB);
+    return if ! @group_lines;
+    
+    foreach my $group_line(@group_lines) {
+        $group_line =~ s/:.*$//;
+        push @groups, $group_line;
+    }
+    return @groups;
+}
 
+sub list_group_members {
+    my ($group_name) = @_;
+    return if !defined($group_name);
+    return if $group_name eq "";
+    
+    my @group_lines = read_lines_from_file($MYCVS_GROUPS_DB);
+    return if ! @group_lines;
+    
+    foreach my $group_line(@group_lines) {
+        chomp $group_line;
+        if ($group_line =~ /^${group_name}:/) {
+            $group_line =~ s/^${group_name}://;
+            return split(',',$group_line);
+        }
+    }
+    return;
+}
 # Adds user to group. If group not exists prints error
 sub add_user_to_group_impl {
     my ($user_name, $group_name) = @_;

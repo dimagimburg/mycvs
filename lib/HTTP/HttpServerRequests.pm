@@ -17,7 +17,8 @@ our @EXPORT = qw(
                 get_remote_repo_content post_create_remote_repo
                 delete_remote_repo delete_remote_repo_perm
                 post_remote_repo_perm post_remote_add_user
-                post_remote_user_del
+                post_remote_user_del get_remote_listrepos
+                get_remote_repo_members
                 );
 
 # Internal libs
@@ -36,6 +37,8 @@ our %get_commands = (
                 get_all_revisions=> '/repo/revisions',
                 get_timestamp    => '/repo/timestamp',
                 get_filelist     => '/repo/filelist',
+                get_listrepos    => '/repo/listrepos',
+                get_repo_members => '/repo/members'
                 );
 our %post_commands = (
                 checkin          => '/repo/checkin',
@@ -180,6 +183,38 @@ sub get_remote_checkout {
     save_string_to_new_file($response, $temp_file_path);
     set_file_time($temp_file_path, $headers{'time-stamp'});
     return $response;
+}
+
+sub get_remote_listrepos {
+    my ($response, %headers);
+    my $file_path = getcwd().'/.';
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    my %options = parse_config_line($file_path);
+    
+    ($response, %headers) = send_http_request('GET',$get_commands{get_listrepos}, "");
+    return if ! defined($response);
+    
+    return convert_response_to_array($response);
+}
+
+sub get_remote_repo_members {
+    my ($reponame) = @_;
+    my ($vars, $response, @file_lines, %headers);
+    my $file_path = getcwd().'/.';
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    my %options = parse_config_line($file_path);
+    $vars = "reponame=".$reponame;
+    
+    ($response, %headers) = send_http_request('GET',
+                                              $get_commands{get_repo_members},
+                                              $vars);
+    return if !defined($response);
+    
+    return convert_response_to_array($response);
 }
 
 sub post_remote_checkin {

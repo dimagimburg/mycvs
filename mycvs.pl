@@ -71,8 +71,8 @@ sub group {
     given(shift) {
         when ('add') {UserManagement::Commands::group_add(shift);}
         when ('rem') {UserManagement::Commands::group_rem(shift);}
-        when ('list') {UserManagement::Commands::list_groups();}
-        when ('members') {UserManagement::Commands::list_group_members(shift);}
+        when ('list') {UserManagement::Commands::list_remote_groups();}
+        when ('members') {UserManagement::Commands::list_remote_group_members(shift);}
         when  ('user') {
             given(shift) {
                 when ('add') {UserManagement::Commands::add_user_to_group(shift, shift);}
