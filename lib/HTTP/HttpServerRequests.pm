@@ -179,6 +179,7 @@ sub get_remote_checkout {
     
     save_string_to_new_file($response, $temp_file_path);
     set_file_time($temp_file_path, $headers{'time-stamp'});
+    return $response;
 }
 
 sub post_remote_checkin {
@@ -186,6 +187,7 @@ sub post_remote_checkin {
     my ($data, $vars, $response, $local_file_path, @file_lines, %headers);
     
     if (! check_http_prerequisites($file_path)) {
+        print "HI";
         return;
     }
     my %options = parse_config_line($file_path);
@@ -198,13 +200,13 @@ sub post_remote_checkin {
     
     @file_lines = read_lines_from_file($local_file_path);
     if (! @file_lines) {
-        return;
+        print "You are checking in an empty file\n.";
+        $data = "\n";
     }
     $data = join('', @file_lines);
     
     
     ($response, %headers) = send_http_request('POST', $post_commands{checkin}, $vars, $data);
-    return if ! defined($response);
     return $response;
 }
 
@@ -242,6 +244,7 @@ sub post_create_remote_repo {
        
     
     ($response, %headers) = send_http_request('POST', $post_commands{add_repo}, $vars);
+    return $response;
 }
 
 sub delete_remote_repo {

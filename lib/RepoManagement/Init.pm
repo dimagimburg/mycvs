@@ -29,6 +29,7 @@ sub init_global {
     # Create global configuration dir that will hold all the db files
     check_and_create_dir($MYCVS_GLOBAL_BASEDIR);
     check_and_create_dir($MYCVS_DB_FOLDER);
+    check_and_create_dir($MYCVS_REPO_STORE);
     init_users_db();
     init_groups_db();
     init_admins_db();
@@ -86,7 +87,7 @@ sub parse_config_line {
     
     my (@lines, @splitted, %options);
     if (! defined($reporoot)) {
-        return;
+        die "Client not configured. Please use 'clientconfig'\n" if ! %options;
     }
     @lines = read_lines_from_file("$reporoot/.mycvs/$MYCVS_CONFIG_NAME");
     if (@lines) {
@@ -152,11 +153,11 @@ sub create_local_repo {
     my ($reponame) = @_;
     return if ! defined($reponame);
     my $dir_path = $MYCVS_REPO_STORE.'/'.$reponame;
-    if (!-d $dir_path) {
-        check_and_create_dir($dir_path);
+    check_and_create_dir($dir_path);
+    if (! exists_group($reponame)) {
         return create_group_record($reponame);
     } else {
-        return 0;
+        return 2;
     }
 }
 
@@ -165,9 +166,9 @@ sub remove_local_repo {
     return if ! defined($reponame);
     my $dir_path = $MYCVS_REPO_STORE.'/'.$reponame;
     
-    if (-d $dir_path && remove_group($reponame)) {
-        remove_tree($dir_path);
-        return 1;
+    if (exists_group($reponame)) {
+        remove_tree($dir_path) if -d $MYCVS_REPO_STORE.'/'.$reponame;
+        return remove_group($reponame);
     } else {
         return 0;
     }
