@@ -18,8 +18,8 @@ our @EXPORT = qw(
                 delete_remote_repo delete_remote_repo_perm
                 post_remote_repo_perm post_remote_add_user
                 post_remote_user_del get_remote_listrepos
-                get_remote_repo_members
-                );
+                get_remote_repo_members post_auth_user
+                ); ###################
 
 # Internal libs
 use lib qw(../);
@@ -45,7 +45,8 @@ our %post_commands = (
                 add_repo         => '/repo/add',
                 add_user_to_repo => '/repo/user/add',
                 unlock_file      => '/repo/unlock',
-                create_user      => '/user/add'
+                create_user      => '/user/add',
+                auth_user        => '/user/auth' ###############################
                 );
 our %delete_commands = (
                 delete_repo      => '/repo/del',
@@ -339,6 +340,28 @@ sub post_remote_repo_perm {
                                               $vars);
     return $response;
 }
+
+
+#############################################################################
+sub post_auth_user {
+    my ($user,$passhash,$repo) = @_;
+    my $file_path = getcwd().'/.';
+    my ($vars, $response, %headers);
+
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    if (!defined($user) || !defined($passhash)) {
+        return;
+    }
+
+    $vars = "username=".$user."&pass=".$passhash."&repo=".$repo;
+    ($response, %headers) = send_http_request('POST',
+                                              $post_commands{auth_user},
+                                              $vars);
+    return $response;
+}
+#############################################################################
 
 sub post_remote_add_user {
     my ($user, $passhash, $isAdmin) = @_;

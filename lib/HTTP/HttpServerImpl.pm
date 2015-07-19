@@ -677,6 +677,23 @@ sub user_post_commands {
                 return;
             }
         }
+        ###################################################################
+        when("/auth"){
+            print "Processing 'auth' Request\n";
+            my $username = $vars{'username'};
+            my $passhash = $vars{'pass'};
+            my $repo = $vars{'repo'};
+            
+            # TODO - FOUND BUG - WHEN USER EXISTS IN THE SYSTEM BUT NOT IN THE GROUP THE FUNCTION exist_user_in_group
+            # RETURNS HERE TRUE
+
+            $header = default_header(length($content), "");
+            if(authorize_user($username,$passhash) == 200 && exist_user_in_group($username,$repo)){
+                $content = 1;
+            } else {
+                $content = 0;
+            }
+        }
         default {
             return;
         }
