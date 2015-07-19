@@ -73,6 +73,7 @@ sub group {
         when ('rem') {UserManagement::Commands::group_rem(shift);}
         when ('list') {UserManagement::Commands::list_remote_groups();}
         when ('members') {UserManagement::Commands::list_remote_group_members(shift);}
+        when ('backup') {UserManagement::Commands::backup(shift);};
         when  ('user') {
             given(shift) {
                 when ('add') {UserManagement::Commands::add_user_to_group(shift, shift);}
@@ -113,6 +114,7 @@ sub usage {
     print "    $0 diff -r <revision> <filename>     - displays diff of local file and specific repo revision.\n";
     print "    $0 repo add <reponame>               - Add remote repo.\n";
     print "    $0 repo rem <reponame>               - Remove remote repo.\n";
+    print "    $0 repo backup <reponame>            - Creates tar file with repository backup.\n";
     print "    $0 repo list                         - List remote repos.\n";
     print "    $0 repo members <reponame>           - List repo users.\n";
     print "    $0 repo user rem <user> <reponame>   - Add user to repo.\n";

@@ -21,6 +21,37 @@ use lib qw(../);
 use UserManagement::Impl;
 use HTTP::HttpServerRequests;
 
+
+############################# BAKCUP ###################################
+# i tried to pu the implementation in the impl but something went wrong.
+# ill be happy to see what is your way to do it, by now it is here.
+########################################################################
+
+# creates tar file for repo backup
+sub backup {
+    my ($reponame) = @_;
+    if(exists_repo_remote($reponame)){
+        print "Please enter your username:"; my $username = <STDIN>; chomp $username;
+        print "Please enter you password:"; my $password = <STDIN>; chomp $password;
+    } else {
+        print "repo: $reponame doesn't exists on remote. \n";
+    }
+}
+
+sub exists_repo_remote {
+    my ($reponame) = @_;
+    my @repos = get_remote_listrepos();
+    foreach(@repos) {
+        chomp $_;
+        if ($reponame eq $_) {return 1;}
+    } 
+    return 0;
+}
+
+
+#########################################################################
+#########################################################################
+
 # Interactive user add
 sub add_user {
     my ($user_name, $password) = @_;

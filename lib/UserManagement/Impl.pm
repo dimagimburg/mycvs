@@ -25,7 +25,7 @@ our @EXPORT = qw(
                 exist_user_in_group is_user_admin create_admin_user
                 list_users create_admin_user create_user_record_silent
                 remove_user list_admin_users remove_admin exists_group
-                list_groups list_group_members
+                list_groups list_group_members exists_group_remote
                 );
                 
 # Internal libs
