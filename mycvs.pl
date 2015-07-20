@@ -25,6 +25,7 @@ given(shift(@ARGV)) {
         GetOptions('-r=i' => \$revision) or die usage();
         diff(shift(@ARGV), $revision);
     }
+    when ('localdiff') {diff_local(shift(@ARGV),shift(@ARGV))}
     when ('checkin') { checkin(shift(@ARGV)); }
     when ('checkout') {
         my $revision;
@@ -42,6 +43,10 @@ given(shift(@ARGV)) {
 
 sub diff {
     VersionManagement::Commands::print_revision_diff(shift, shift);
+}
+
+sub diff_local {
+    VersionManagement::Commands::print_local_files_diff(shift, shift);
 }
 
 sub checkin {
@@ -102,24 +107,26 @@ sub filelist {
 }
 
 sub usage {
+    my $exe = basename($0);
     print "\n    USAGE:\n";
-    print "    $0 server                            - Server Configuration.\n";
-    print "    $0 clientconfig                      - initializing local repository.\n";
-    print "    $0 filelist                          - List repository content. (R - only remote, L - remote and local)\n";
-    print "    $0 checkin <filename>                - add/checking file to repository.\n";
-    print "    $0 checkout <filename>               - checkout file from repository.(Overwrites)\n";
-    print "    $0 checkout -r <revision> <filename> - checkout file from repository at specific revision.(Overwrites)\n";
-    print "    $0 revisions <filename>              - list file revisions.\n";
-    print "    $0 diff <filename>                   - displays diff of local file and latest repo revision.\n";
-    print "    $0 diff -r <revision> <filename>     - displays diff of local file and specific repo revision.\n";
-    print "    $0 repo add <reponame>               - Add remote repo.\n";
-    print "    $0 repo rem <reponame>               - Remove remote repo.\n";
-    print "    $0 repo backup <reponame>            - Creates tar file with repository backup.\n";
-    print "    $0 repo list                         - List remote repos.\n";
-    print "    $0 repo members <reponame>           - List repo users.\n";
-    print "    $0 repo user rem <user> <reponame>   - Add user to repo.\n";
-    print "    $0 repo user add <user> <reponame>   - Remove user from repo.\n";
-    print "    $0 user add <user>                   - Add user.\n";
-    print "    $0 user rem <user>                   - Remove user.\n";
-    print "    $0 user repo list <user>             - List user's groups.\n";
+    print "    $exe server                            - Server Configuration.\n";
+    print "    $exe clientconfig                      - initializing local repository.\n";
+    print "    $exe filelist                          - List repository content. (R - only remote, L - remote and local)\n";
+    print "    $exe checkin <filename>                - add/checking file to repository.\n";
+    print "    $exe checkout <filename>               - checkout file from repository.(Overwrites)\n";
+    print "    $exe checkout -r <revision> <filename> - checkout file from repository at specific revision.(Overwrites)\n";
+    print "    $exe revisions <filename>              - list file revisions.\n";
+    print "    $exe diff <filename>                   - displays diff of local file and latest repo revision.\n";
+    print "    $exe diff -r <revision> <filename>     - displays diff of local file and specific repo revision.\n";
+    print "    $exe localdiff <filename1> <filename2> - displays diff of two local files.\n";
+    print "    $exe repo add <reponame>               - Add remote repo.\n";
+    print "    $exe repo rem <reponame>               - Remove remote repo.\n";
+    print "    $exe repo backup <reponame>            - Creates tar file with repository backup.\n";
+    print "    $exe repo list                         - List remote repos.\n";
+    print "    $exe repo members <reponame>           - List repo users.\n";
+    print "    $exe repo user rem <user> <reponame>   - Add user to repo.\n";
+    print "    $exe repo user add <user> <reponame>   - Remove user from repo.\n";
+    print "    $exe user add <user>                   - Add user.\n";
+    print "    $exe user rem <user>                   - Remove user.\n";
+    print "    $exe user repo list <user>             - List user's groups.\n";
 }

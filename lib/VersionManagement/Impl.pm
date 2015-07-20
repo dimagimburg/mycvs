@@ -17,7 +17,7 @@ our @EXPORT = qw(
                 set_file_time is_file_locked get_locked_user save_string_to_new_file
                 get_timestamp get_merged_plain_file lock_file unlock_file is_file_locked
                 delete_file get_dir_contents_recur print_revisions_to_array
-                get_diff_on_two_files diff_on_two_files
+                get_diff_on_two_files
                 );
 # Internal libs
 use lib qw(../);
@@ -140,7 +140,7 @@ sub get_diff {
         # Temporary save file
         save_lines_array_to_file(\@old_rev_lines, $file_path.'.merged');
         @diff = get_diff_on_two_files($file_path, $file_path.'.merged');
-        #delete_file($file_path.'.merged');
+        delete_file($file_path.'.merged');
     }
     
     return @diff;

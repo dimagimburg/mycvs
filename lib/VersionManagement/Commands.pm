@@ -11,7 +11,7 @@ use Cwd qw(realpath);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
                 checkin_file checkout_file print_revision_diff
-                print_revisions print_file_list
+                print_revisions print_file_list print_local_files_diff
                 );
 # Internal libs
 use lib qw(../);
@@ -59,7 +59,6 @@ sub checkout_file {
 # If revision not defined users last revision.
 sub print_revision_diff  {
     my ($file_path, $revision) = @_;
-    my $sequence_counter = 0;
     if (! defined($file_path) && defined($revision)) {
         die "You need to specify filename.\n";
     }
@@ -72,7 +71,29 @@ sub print_revision_diff  {
         print "There are no diferences.\n";
     } else {
         # Print diff.
-        print "Printing diff\n";
+        print "Printing diff for file: '$file_path'\n";
+        print "=======================\n";
+        foreach(@lines) {
+            print $_;
+        }
+    }
+}
+
+sub print_local_files_diff {
+    my ($new_file, $old_file) = @_;
+    if (!defined($old_file) || !defined($new_file)) {
+        die "You need to specify two files for diff.\n";
+    }
+    
+    die "'$old_file' not exists.\n" if ! -f $old_file;
+    die "'$new_file' not exists.\n" if ! -f $new_file;
+    
+    my @lines = get_diff_on_two_files($new_file, $old_file);
+    if (! @lines) {
+        print "There are no diferences.\n";
+    } else {
+        # Print diff.
+        print "Diff for files: '$new_file' and '$old_file'\n";
         print "=======================\n";
         foreach(@lines) {
             print $_;
