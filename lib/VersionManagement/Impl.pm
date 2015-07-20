@@ -17,7 +17,7 @@ our @EXPORT = qw(
                 set_file_time is_file_locked get_locked_user save_string_to_new_file
                 get_timestamp get_merged_plain_file lock_file unlock_file is_file_locked
                 delete_file get_dir_contents_recur print_revisions_to_array
-                get_diff_on_two_files
+                get_diff_on_two_files diff_on_two_files
                 );
 # Internal libs
 use lib qw(../);
@@ -124,7 +124,8 @@ sub get_diff {
     my $last_rev_path = dirname($file_path).'/.mycvs/'.basename($file_path).'.'.$revisions[-1].'.diff';
     
     @diff = get_diff_on_two_files($file_path, $last_rev_path);
-    if (($revision > 0) && ($revision <= $revisions[-1])) {
+    
+    if (($revision > 0) && ($revision < $revisions[-1])) {
         # First merge is different.
         my @old_rev_lines = read_lines_from_file($last_rev_path);
         @old_rev_lines = merge_back_diff_on_file(\@old_rev_lines, \@diff);
@@ -139,7 +140,7 @@ sub get_diff {
         # Temporary save file
         save_lines_array_to_file(\@old_rev_lines, $file_path.'.merged');
         @diff = get_diff_on_two_files($file_path, $file_path.'.merged');
-        delete_file($file_path.'.merged');
+        #delete_file($file_path.'.merged');
     }
     
     return @diff;
@@ -200,6 +201,25 @@ sub merge_back_diff_on_file {
     return @file_array;
     
 }
+
+# returns index of line when change end
+sub check_where_change_end {
+    my ($oldf, $newf, $old_index, $new_index) = @_;
+    my @old_lines = @$oldf;
+    my @new_lines = @$newf;
+    my $new_len = @new_lines;
+    my $old_len = @old_lines;
+    
+    return if $new_index >= $new_len; # we can't read more from new file
+    return if $old_index >= $old_len; # we can't read more from old file
+    
+    for (my $index = $old_index; $index < $old_len; $index++) {
+        if ($old_lines[$index] eq $new_lines[$new_index]) {
+            return $index;
+        }
+    }
+    return;
+}
 # Returns diff of file from repository at given revision.
 # Prints error if file not in repository or revision not found.
 # if revision not defined uses latest revision
@@ -209,42 +229,56 @@ sub merge_back_diff_on_file {
 # + 2 Some new text
 sub get_diff_on_two_files {
     my ($new_file, $old_file) = @_;
-    my @diff = (); # diff lines
-    my ($old_line, $new_line);
-    my $new_counter = 1;
+    my @old_lines = read_lines_from_file($old_file);
+    my @new_lines = read_lines_from_file($new_file);
+    my $new_len = @new_lines;
+    my $old_len = @old_lines;
+    my $new_counter; my $old_counter = 0;
+    my @diff = ();
     
-    open(new_handle, $new_file) or die "Unable to open file. $!. Is it exists?\n";
-    open(old_handle, $old_file) or die "Unable to open previous revision. $!.\n";
-    #if (! -T $file_path) {
-    #    return; # Given file is binary file. Not trying to diff it
-    #}
-
-    while ($new_line = <new_handle>) {
-        $old_line = readline old_handle;
-        # Stop if we can't read old file anymore
-        if (! defined($old_line)) {last;}
-        
-        if ($new_line ne $old_line) {
-            push @diff, '- '.$new_counter.' '.$old_line;
-            push @diff, '+ '.$new_counter.' '.$new_line;
+    for ($new_counter = 0; $new_counter < $new_len; $new_counter++) {
+        # Stop if old file doesn't have anymore lines to read
+        if ($old_counter >= $old_len) {
+            # We reached end on old file but not new file.
+            # Lets save it
+            print "we are here\n";
+            push @diff, '+ '.($old_counter+1).' '.$new_lines[$old_counter];
+            next;
         }
-        $new_counter++;
+        
+        if ($new_lines[$new_counter] ne $old_lines[$old_counter]) {
+            # we detected change on line
+            my $after_removed_index = check_where_change_end(\@old_lines, \@new_lines, $old_counter, $new_counter);
+            my $after_added_index   = check_where_change_end(\@new_lines, \@old_lines, $new_counter, $old_counter);
+            
+            if (defined($after_removed_index)) {
+                # We detected removed lines. lets save them
+                for (; $old_counter < $after_removed_index; $old_counter++) {
+                    push @diff, '- '.($old_counter+1).' '.$old_lines[$old_counter];
+                }
+            }
+            elsif (defined($after_added_index)) {
+                # We detected added lines. lets save them
+                for (; $new_counter < $after_added_index; $new_counter++) {
+                    push @diff, '+ '.($old_counter+1).' '.$new_lines[$new_counter];
+                }
+            }
+            else {
+                # The line was only changed
+                push @diff, '- '.($old_counter+1).' '.$old_lines[$old_counter];
+                push @diff, '+ '.($old_counter+1).' '.$new_lines[$new_counter];
+            }
+            
+        }
+        $old_counter++;
     }
-    # If we still have more lines in one of the files, read them all
-    # Read till end of old file and mark all 'spare' lines as -
-    # in new file diff
-    while ($old_line = <old_handle>) {
-        push @diff, '- '.$new_counter.' '.$old_line;
-        $new_counter++;
+    # If we still have old file lines unsaved so they got removed from new file
+    while ($old_counter < $old_len) {
+        push @diff, '- '.($old_counter+1).' '.$old_lines[$old_counter];
+        $old_counter++;
     }
-    # Read till end of new file and mark all 'spare' lines as +
-    # in new file diff. Also make sure that we not missing line
-    while ($new_line) {
-        push @diff, '+ '.$new_counter.' '.$new_line;
-        $new_line = readline new_handle;
-        $new_counter++;
-    }
-    close(new_handle); close(old_handle);
+    
+        
     return @diff;
 }
 

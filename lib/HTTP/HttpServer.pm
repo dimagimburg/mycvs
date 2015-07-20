@@ -28,7 +28,7 @@ sub start_server {
     print "MyCVS WebServer listening on ".($server->port)."...\n";
     while (my $client=($server->socket)->accept()){
         print "Got Request from '".$client->peerhost."'.\n";
-        my ($user, $pass, $header, $request, $data);
+        my ($user, $pass, $header, $request, $data, $timestamp);
     
         ($request, $data) = HTTP::HttpServerImpl::get_request_params($server->type, $client);
         if (!defined($request) && !defined($data)) {
@@ -40,6 +40,10 @@ sub start_server {
             my @auth_string = split (/\s/, $&);
             my $user_pass = decode_base64($auth_string[2]);
             ($user, $pass) = split (/:/, $user_pass);
+            if ($request =~ /Time-Stamp:\s\d+/) {
+                $timestamp = (split(': ', $&))[1];
+            }
+            
         } else {
             print "Sending Auth request\n";
             $header = HTTP::HttpServerImpl::get_auth_message();
@@ -52,7 +56,7 @@ sub start_server {
         given($request_type) {
             when("POST") {
                 print "Processing POST Request\n";
-                ($header, $data) = HTTP::HttpServerImpl::process_post($request_path, $user, $pass, $data);
+                ($header, $data) = HTTP::HttpServerImpl::process_post($request_path, $user, $pass, $data, $timestamp);
             }
             when("GET") {
                 print "Processing GET Request\n";

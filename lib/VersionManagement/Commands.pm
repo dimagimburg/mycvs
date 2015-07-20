@@ -59,6 +59,7 @@ sub checkout_file {
 # If revision not defined users last revision.
 sub print_revision_diff  {
     my ($file_path, $revision) = @_;
+    my $sequence_counter = 0;
     if (! defined($file_path) && defined($revision)) {
         die "You need to specify filename.\n";
     }
@@ -70,7 +71,9 @@ sub print_revision_diff  {
     if (! @lines) {
         print "There are no diferences.\n";
     } else {
-        # Print diff. 
+        # Print diff.
+        print "Printing diff\n";
+        print "=======================\n";
         foreach(@lines) {
             print $_;
         }

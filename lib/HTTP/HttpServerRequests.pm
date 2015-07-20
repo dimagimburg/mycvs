@@ -19,7 +19,8 @@ our @EXPORT = qw(
                 post_remote_repo_perm post_remote_add_user
                 post_remote_user_del get_remote_listrepos
                 get_remote_repo_members post_auth_user
-                ); ###################
+                get_remote_timestamp
+                );
 
 # Internal libs
 use lib qw(../);
@@ -46,7 +47,7 @@ our %post_commands = (
                 add_user_to_repo => '/repo/user/add',
                 unlock_file      => '/repo/unlock',
                 create_user      => '/user/add',
-                auth_user        => '/user/auth' ###############################
+                auth_user        => '/user/auth' 
                 );
 our %delete_commands = (
                 delete_repo      => '/repo/del',
@@ -54,13 +55,11 @@ our %delete_commands = (
                 remove_repo_perm => '/repo/user/del'
                 );
 
-#parse_config_line
-
 sub send_http_request {
-    my ($method, $command, $vars, $data) = @_;
+    my ($method, $command, $vars, $data, $timestamp) = @_;
     my $response;
     my $http = HTTP::Tiny->new(%http_options);
-    my %options = parse_config_line(getcwd());
+    my %options = parse_config_line(getcwd().'/.');
     my $uri = "http://$options{user}:$options{pass}@";
     
     $uri .= "$options{host}:$options{port}";
@@ -70,18 +69,20 @@ sub send_http_request {
     if (!defined($data)) {
         $response = $http->request($method, $uri);
     } else {
+        $timestamp = 0 if !defined($timestamp);
         $response = $http->request(
                                 $method,
                                 $uri => {
                                     content => $data,
                                     headers => {
-                                        "Content-Type" => "text/plain"
+                                        "Content-Type" => "text/plain",
+                                        "Time-Stamp"   => "$timestamp"
                                     }
                                 }
                             );
     }
     
-    print Dumper $response;
+    
     return ($response->{content}, %{$response->{headers}}) if $response->{status} eq 200;
     die "Requested resourse not Found.\n" if $response->{status} eq 404;
     die $response->{content}."\n" if $response->{status} eq 409;
@@ -153,8 +154,8 @@ sub get_remote_plain_diff {
     return if ! defined($response);
     
     save_string_to_new_file($response, $temp_file_path);
-    @diff = get_diff_on_two_files($temp_file_path, $local_file_path);
-    print Dumper \@diff;
+    @diff = get_diff_on_two_files($local_file_path, $temp_file_path);
+    
     delete_file($temp_file_path);
     return @diff;
 }
@@ -223,12 +224,15 @@ sub post_remote_checkin {
     my ($data, $vars, $response, $local_file_path, @file_lines, %headers);
     
     if (! check_http_prerequisites($file_path)) {
-        print "HI";
         return;
     }
-    my %options = parse_config_line($file_path);
-    my $reporoot = get_repo_root($file_path);
-    my $timestamp;
+    my %options   = parse_config_line($file_path);
+    my $reporoot  = get_repo_root($file_path);
+    my $timestamp = get_file_time($file_path);
+    
+    if ($timestamp eq get_remote_timestamp($file_path)) {
+        return "TimeStamp not changed. Nothing to checkin.\n";
+    }
     
     $local_file_path = $file_path;
     $file_path =~ s/${reporoot}//;
@@ -242,8 +246,31 @@ sub post_remote_checkin {
     $data = join('', @file_lines);
     
     
-    ($response, %headers) = send_http_request('POST', $post_commands{checkin}, $vars, $data);
+    ($response, %headers) = send_http_request('POST',
+                                              $post_commands{checkin},
+                                              $vars, $data, $timestamp);
     return $response;
+}
+
+sub get_remote_timestamp {
+    my ($file_path) = @_;
+    my ($vars, $response, $local_file_path, @file_lines, %headers);
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    my %options = parse_config_line($file_path);
+    my $reporoot = get_repo_root($file_path);
+    my $timestamp;
+    
+    $local_file_path = $file_path;
+    $file_path =~ s/${reporoot}//;
+    $vars = "reponame=".$options{reponame}."&filename=".$file_path;
+    
+    ($response, %headers) = send_http_request('GET',
+                                              $get_commands{get_timestamp},
+                                              $vars);
+    return %headers{'time-stamp'};
 }
 
 sub get_remote_repo_content {

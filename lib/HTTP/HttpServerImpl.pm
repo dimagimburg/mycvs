@@ -193,7 +193,7 @@ sub not_found_message {
 }
 
 sub process_post {
-    my ($request_path, $user, $pass, $data) = @_;
+    my ($request_path, $user, $pass, $data, $timestamp) = @_;
     my ($command_line, $command, $vars_line, $header, $content, %vars);
     if (authorize_user($user, $pass) ne 200) {
         return (get_auth_message(), "");
@@ -202,6 +202,9 @@ sub process_post {
     # Here user was already been authorized.
     ($command_line, $vars_line) = split_address($request_path);
     %vars = parse_vars($vars_line);
+    if (defined($timestamp)) {
+        $vars{'Time-Stamp'} = $timestamp 
+    }
     
     given(get_parent_command($command_line)) {
         when("repo") {
@@ -449,12 +452,15 @@ sub repo_get_commands {
             my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
             $timestamp = get_timestamp($file, $revision);
             
-            if (defined($timestamp)) {
-                $header = "Time-Stamp: ".$timestamp."\r\n";
-                $content = $header;
+            if (!defined($timestamp)) {
+                #$header = "Time-Stamp: ".$timestamp."\r\n";
+                #$content = $header;
+                $timestamp = -1;
             } else {
-                return;
+                #return;
             }
+            $header = "Time-Stamp: ".$timestamp."\r\n";
+            $content = $header;
         }
         when("filelist") {
             print "Processing 'filelist' Request\n";
@@ -545,6 +551,7 @@ sub repo_post_commands {
     my $reponame = $vars{'reponame'};
     my $filename = $vars{'filename'};
     my $revision = $vars{'revision'};
+    my $timestamp = $vars{'Time-Stamp'};
     my ($header, $content);
     
     
@@ -564,6 +571,10 @@ sub repo_post_commands {
             }
             
             save_string_to_new_file($data, $real_file_path);
+            if (defined($timestamp) && $timestamp =~ /^\d+?$/ && $timestamp > 0) {
+                set_file_time($real_file_path, $timestamp);
+            }
+            
             my $err = make_checkin($real_file_path);
             
             unlock_file($real_file_path);
