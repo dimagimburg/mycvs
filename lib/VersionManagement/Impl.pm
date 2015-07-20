@@ -19,6 +19,8 @@ our @EXPORT = qw(
                 delete_file get_dir_contents_recur print_revisions_to_array
                 get_diff_on_two_files
                 );
+# Internal libs
+use lib qw(../);
 use RepoManagement::Configuration qw($MYCVS_DB_FOLDER);
 
 # Checks in file. If first checkin uses function checkin_first.
