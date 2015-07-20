@@ -67,21 +67,30 @@ sub send_http_request {
     $uri .= "$vars";
     
     if (!defined($data)) {
-        $response = $http->request($method, $uri);
+        #$response = $http->request($method, $uri);
+        $response = $http->request(
+                                $method,
+                                $uri => {
+                                    headers => {
+                                        "User-Agent" => "MyCVS Client"
+                                    }
+                                }
+                            );
     } else {
         $timestamp = 0 if !defined($timestamp);
         $response = $http->request(
                                 $method,
                                 $uri => {
+                                    agent   => "MyCVSClient",
                                     content => $data,
                                     headers => {
+                                        "User-Agent"   => "MyCVS Client",
                                         "Content-Type" => "text/plain",
                                         "Time-Stamp"   => "$timestamp"
                                     }
                                 }
                             );
     }
-    
     
     return ($response->{content}, %{$response->{headers}}) if $response->{status} eq 200;
     die "Requested resourse not Found.\n" if $response->{status} eq 404;
