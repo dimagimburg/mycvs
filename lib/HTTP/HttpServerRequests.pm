@@ -279,7 +279,7 @@ sub get_remote_timestamp {
     ($response, %headers) = send_http_request('GET',
                                               $get_commands{get_timestamp},
                                               $vars);
-    return %headers{'time-stamp'};
+    return $headers{'time-stamp'};
 }
 
 sub get_remote_repo_content {
