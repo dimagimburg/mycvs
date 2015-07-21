@@ -16,6 +16,7 @@ our @EXPORT = qw(
 # Internal libs
 use lib qw(../);
 use VersionManagement::Impl;
+use RepoManagement::Init;
 use HTTP::HttpServerRequests;
 use RepoManagement::Configuration qw($MYCVS_REMOTE_SUFFIX);
 
@@ -130,19 +131,31 @@ sub print_revisions {
 
 sub print_file_list {
     my @files = get_remote_repo_content();
-    if (!@files) {
-        die "Remote Repository doesn't have files\n";
+    my $reporoot = get_repo_root(getcwd().'/.');
+    # Creating hash of local files for easy access
+    my %local_files = map { $_ => 1 } get_dir_contents_recur($reporoot.'/');
+    chdir $reporoot;
+    
+    if (!@files && !%local_files) {
+        die "Remote Repository and Local store doesn't have files\n";
     }
-    print "Listing repository files\n";
+    print "Listing repository files relative to Reporoot.\n";
+    print "Reporoot: '$reporoot'\n";
+    print "R - remote, L - local, LR - local&remote\n";
     print "==============================\n";
     foreach my $file(@files) {
         $file =~ s/^\///;
-        if (-f $file) {
-            print "L - Filename: '$file'\n";
+        if (defined($local_files{$file})) {
+            print "LR - Filename: '$file'\n";
+            delete $local_files{$file};
         } else {
-            print "R - Filename: '$file'\n";
+            print "R  - Filename: '$file'\n";
         }
     }
+    foreach(keys %local_files) {
+        print "L  - Filename: '$_'\n" if ! -d $_;
+    }
+    
 }
 
 1;

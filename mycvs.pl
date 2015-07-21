@@ -109,12 +109,12 @@ sub filelist {
 sub usage {
     my $exe = basename($0);
     print "\n    USAGE:\n";
-    print "    $exe server                            - Server Configuration.\n";
+    print "    $exe server                            - Server Configuration/Startup.\n";
     print "    $exe clientconfig                      - initializing local repository.\n";
-    print "    $exe filelist                          - List repository content. (R - only remote, L - remote and local)\n";
+    print "    $exe filelist                          - List repository content.\n";
     print "    $exe checkin <filename>                - add/checking file to repository.\n";
-    print "    $exe checkout <filename>               - checkout file from repository.(Overwrites)\n";
-    print "    $exe checkout -r <revision> <filename> - checkout file from repository at specific revision.(Overwrites)\n";
+    print "    $exe checkout <filename>               - checkout file from repository.\n";
+    print "    $exe checkout -r <revision> <filename> - checkout file from repository at specific revision.\n";
     print "    $exe revisions <filename>              - list file revisions.\n";
     print "    $exe diff <filename>                   - displays diff of local file and latest repo revision.\n";
     print "    $exe diff -r <revision> <filename>     - displays diff of local file and specific repo revision.\n";
