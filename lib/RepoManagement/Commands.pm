@@ -13,42 +13,15 @@ use Exporter qw(import);
 use Cwd;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-                create_repo delete_repo get_repositories get_repo_root_of_file
-                create_admin_repo_group create_users_repo_group print_repositories
+                create_user_config backup_repo restore_repo
+                backup_db restore_db list_repo_backups list_db_backups
                 );
 # Internal libs
 use lib qw(../);
-#use UserManagement::Commands;
 use RepoManagement::Configuration qw($MYCVS_REPO_STORE);
 use RepoManagement::Init;
 use VersionManagement::Impl;
-
-# Returns list of all repositories names
-sub get_repositories {
-    if (! -f $MYCVS_REPO_STORE) {
-        return;
-    }
-    return get_dir_contents($MYCVS_REPO_STORE);   
-}
-
-# print content of $RepoManagement::Configuration::MYCVS_REPOS_DB
-# in pretty way. Example:
-# RepoRoot: <path>, UsersGroup: <>
-sub print_repositories {
-    
-}
-
-# Returns repository root_dir of given file path
-sub get_repo_root_of_file {
-    my ($file_path) = @_;
-    # Return root_dir of repository that given file belongs (hould be full file path)
-    my $reporoot = get_repo_root($file_path);
-    if (! defined($reporoot)) {
-        return;
-    } else {
-        return $reporoot;
-    }
-}
+use HTTP::HttpServerRequests;
 
 sub create_user_config {
     my $current_dir = getcwd();
@@ -83,5 +56,28 @@ sub create_user_config {
     save_client_config($host, $port, $reponame, $user, $pass, $current_dir);
 }
 
+sub backup_repo {
+    
+}
+
+sub restore_repo {
+    
+}
+
+sub backup_db {
+    
+}
+
+sub restore_db {
+    
+}
+
+sub list_repo_backups {
+    
+}
+
+sub list_db_backups {
+    
+}
 
 1;

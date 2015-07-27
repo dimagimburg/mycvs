@@ -19,7 +19,8 @@ use RepoManagement::Configuration qw(
                     $MYCVS_GLOBAL_BASEDIR $MYCVS_GLOBAL_CONFIG_LOC
                     $MYCVS_USERS_DB $MYCVS_GROUPS_DB $MYCVS_DB_FOLDER
                     $MYCVS_HTTP_PORT $MYCVS_REPO_STORE $MYCVS_CONFIG_NAME
-                    $MYCVS_ADMINS_DB
+                    $MYCVS_ADMINS_DB $MYCVS_BACKUP_STORE
+                    $MYCVS_DB_BACKUP_STORE $MYCVS_REPO_BACKUP_STORE
                     );
 use UserManagement::Impl;
 use VersionManagement::Impl;
@@ -33,6 +34,7 @@ sub init_global {
     init_users_db();
     init_groups_db();
     init_admins_db();
+    init_backup_store();
 }
 
 # Initialize .mycvs store in new directory.
@@ -139,6 +141,11 @@ sub init_admins_db {
         if (! -f $MYCVS_ADMINS_DB) {
         create_file($MYCVS_ADMINS_DB);
     }
+}
+
+sub init_backup_store {
+    check_and_create_dir($MYCVS_DB_BACKUP_STORE);
+    check_and_create_dir($MYCVS_REPO_BACKUP_STORE);
 }
 
 sub create_file {

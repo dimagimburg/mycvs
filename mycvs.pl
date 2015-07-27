@@ -38,6 +38,8 @@ given(shift(@ARGV)) {
     when ('server') { http_server(shift(@ARGV)); }
     when ('clientconfig') {config();}
     when ('filelist') {filelist();}
+    when ('backup') {backup(shift(@ARGV),shift(@ARGV));}
+    when ('restore') {restore(shift(@ARGV),shift(@ARGV));};
     default { usage(); } 
 }
 
@@ -65,10 +67,10 @@ sub user {
         when ('repo') {
             given(shift) {
                 when ('list') {UserManagement::Commands::list_user_groups(shift);}
-                default {usage();}
+                default {user_usage();}
             }
         }
-        default {usage();}
+        default {user_usage();}
     }
 }
 
@@ -78,15 +80,14 @@ sub group {
         when ('rem') {UserManagement::Commands::group_rem(shift);}
         when ('list') {UserManagement::Commands::list_remote_groups();}
         when ('members') {UserManagement::Commands::list_remote_group_members(shift);}
-        when ('backup') {UserManagement::Commands::backup(shift);};
         when  ('user') {
             given(shift) {
                 when ('add') {UserManagement::Commands::add_user_to_group(shift, shift);}
                 when ('rem') {UserManagement::Commands::rem_user_from_group(shift, shift);}
-                default {usage();}
+                default {repo_usage();}
             }
         }
-        default {usage();}
+        default {repo_usage();}
     }
 }
 
@@ -106,27 +107,74 @@ sub filelist {
     VersionManagement::Commands::print_file_list();
 }
 
+sub backup {
+    given(shift) {
+        when('repo') {RepoManagement::Commands::backup_repo(shift)}
+        when('db') {RepoManagement::Commands::backup_db()}
+        when('listdb') {RepoManagement::Commands::list_db_backups()}
+        when('listrepo') {RepoManagement::Commands::list_repo_backups(shift)}
+        default {backup_usage();}
+    }
+}
+
+sub restore {
+    given(shift) {
+        when('repo') {}
+        when('db') {}
+        default {restore_usage();}
+    }
+}
+
 sub usage {
     my $exe = basename($0);
-    print "\n    USAGE:\n";
-    print "    $exe server                            - Server Configuration/Startup.\n";
-    print "    $exe clientconfig                      - initializing local repository.\n";
-    print "    $exe filelist                          - List repository content.\n";
-    print "    $exe checkin <filename>                - add/checking file to repository.\n";
-    print "    $exe checkout <filename>               - checkout file from repository.\n";
-    print "    $exe checkout -r <revision> <filename> - checkout file from repository at specific revision.\n";
-    print "    $exe revisions <filename>              - list file revisions.\n";
-    print "    $exe diff <filename>                   - displays diff of local file and latest repo revision.\n";
-    print "    $exe diff -r <revision> <filename>     - displays diff of local file and specific repo revision.\n";
-    print "    $exe localdiff <filename1> <filename2> - displays diff of two local files.\n";
-    print "    $exe repo add <reponame>               - Add remote repo.\n";
-    print "    $exe repo rem <reponame>               - Remove remote repo.\n";
-    print "    $exe repo backup <reponame>            - Creates tar file with repository backup.\n";
-    print "    $exe repo list                         - List remote repos.\n";
-    print "    $exe repo members <reponame>           - List repo users.\n";
-    print "    $exe repo user rem <user> <reponame>   - Add user to repo.\n";
-    print "    $exe repo user add <user> <reponame>   - Remove user from repo.\n";
-    print "    $exe user add <user>                   - Add user.\n";
-    print "    $exe user rem <user>                   - Remove user.\n";
-    print "    $exe user repo list <user>             - List user's groups.\n";
+    print "\nUSAGE:\n";
+    print "$exe filelist                          - List repository content.\n";
+    print "$exe checkin <filename>                - Checkin file to repository.\n";
+    print "$exe checkout <filename>               - Checkout file from repository.\n";
+    print "$exe checkout -r <revision> <filename> - Checkout file from at revision.\n";
+    print "$exe revisions <filename>              - List file revisions.\n";
+    print "$exe diff <filename>                   - Diff of latest revision.\n";
+    print "$exe diff -r <revision> <filename>     - Diff at specific revision.\n";
+    print "$exe localdiff <filename1> <filename2> - Diff of two local files.\n";
+    print "$exe clientconfig                      - Init local repository.\n";
+    print "$exe server                            - Server sub-menu.\n";
+    print "$exe user                              - UserManagement sub-menu.\n";
+    print "$exe repo                              - RepoManagement sub-menu.\n";
+    print "$exe backup                            - Backup sub-menu.\n";
+    print "$exe restore                           - Restore sub-menu.\n"
+}
+
+sub user_usage {
+    my $exe = basename($0);
+    print "\nUSAGE:\n";
+    print "$exe user add <user>       - Add user.\n";
+    print "$exe user rem <user>       - Remove user.\n";
+    print "$exe user repo list <user> - List user's groups.\n";
+}
+
+sub repo_usage {
+    my $exe = basename($0);
+    print "\nUSAGE:\n";
+    print "$exe repo add <reponame>             - Add remote repo.\n";
+    print "$exe repo rem <reponame>             - Remove remote repo.\n";
+    print "$exe repo list                       - List remote repos.\n";
+    print "$exe repo members <reponame>         - List repo users.\n";
+    print "$exe repo user rem <user> <reponame> - Add user to repo.\n";
+    print "$exe repo user add <user> <reponame> - Remove user from repo.\n";
+}
+
+sub backup_usage {
+    my $exe = basename($0);
+    print "\nUSAGE:\n";
+    print "$exe backup repo <reponame>     - Backup repository.\n";
+    print "$exe backup db                  - Backup DataBase.\n";
+    print "$exe backup listrepo <reponame> - List repository backups.\n";
+    print "$exe backup listdb              - List DataBase backups.\n";
+}
+
+sub restore_usage {
+    my $exe = basename($0);
+    print "\nUSAGE:\n";
+    print "$exe restore repo <reponame> - Backup repository.\n";
+    print "$exe restore db              - Backup DataBase.\n";
 }

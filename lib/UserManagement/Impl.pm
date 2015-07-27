@@ -393,29 +393,6 @@ sub generate_pass_hash {
     }
 }
 
-
-############################### GLOBAL ##################################
-
-sub search_pattern_in_line_begining{
-    my ($pattern,$file_path) = @_;
-
-    my $pattern_begining_line = "^$pattern";
-
-        open(my $fh, '<:encoding(UTF-8)', $file_path);
-
-        while (my $row = <$fh>) {
-            chomp $row;
-            if($row =~ /$pattern_begining_line/) { 
-                close($fh);
-                return 1;
-            }
-        }
-
-        close($fh);
-
-        return 0;
-}
-
 # returns true if base dir mycvs/ exists, else false
 sub exists_base_dir {
     if(-d $MYCVS_GLOBAL_BASEDIR) { return 1 }

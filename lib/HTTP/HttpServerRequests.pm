@@ -18,8 +18,10 @@ our @EXPORT = qw(
                 delete_remote_repo delete_remote_repo_perm
                 post_remote_repo_perm post_remote_add_user
                 post_remote_user_del get_remote_listrepos
-                get_remote_repo_members post_auth_user
-                get_remote_timestamp
+                get_remote_repo_members get_remote_timestamp
+                post_remote_backup_repo post_remote_backup_db
+                post_remote_restore_repo post_remote_restore_db
+                get_remote_repo_backup_list get_remote_db_backup_list
                 );
 
 # Internal libs
@@ -39,15 +41,20 @@ our %get_commands = (
                 get_timestamp    => '/repo/timestamp',
                 get_filelist     => '/repo/filelist',
                 get_listrepos    => '/repo/listrepos',
-                get_repo_members => '/repo/members'
+                get_repo_members => '/repo/members',
+                repo_backup_list => '/backup/repolist',
+                db_backup_list   => '/backup/dblist'
                 );
 our %post_commands = (
                 checkin          => '/repo/checkin',
                 add_repo         => '/repo/add',
                 add_user_to_repo => '/repo/user/add',
                 unlock_file      => '/repo/unlock',
-                create_user      => '/user/add',
-                auth_user        => '/user/auth' 
+                backup_repo      => '/backup/backuprepo',
+                restore_repo     => '/backup/restorerepo',
+                restore_db       => '/backup/restoredb',
+                backup_db        => '/backup/backupdb',
+                create_user      => '/user/add'
                 );
 our %delete_commands = (
                 delete_repo      => '/repo/del',
@@ -63,8 +70,10 @@ sub send_http_request {
     my $uri = "http://$options{user}:$options{pass}@";
     
     $uri .= "$options{host}:$options{port}";
-    $uri .= "$command?";
-    $uri .= "$vars";
+    $uri .= "$command";
+    if (defined($vars)) {
+        $uri .= "?$vars";    
+    }
     
     if (!defined($data)) {
         #$response = $http->request($method, $uri);
@@ -377,28 +386,6 @@ sub post_remote_repo_perm {
     return $response;
 }
 
-
-#############################################################################
-sub post_auth_user {
-    my ($user,$passhash,$repo) = @_;
-    my $file_path = getcwd().'/.';
-    my ($vars, $response, %headers);
-
-    if (! check_http_prerequisites($file_path)) {
-        return;
-    }
-    if (!defined($user) || !defined($passhash)) {
-        return;
-    }
-
-    $vars = "username=".$user."&pass=".$passhash."&repo=".$repo;
-    ($response, %headers) = send_http_request('POST',
-                                              $post_commands{auth_user},
-                                              $vars);
-    return $response;
-}
-#############################################################################
-
 sub post_remote_add_user {
     my ($user, $passhash, $isAdmin) = @_;
     my ($vars, $response, %headers);
@@ -441,6 +428,97 @@ sub post_remote_user_del {
                                               $vars);
     return $response;
 }
+
+sub post_remote_backup_repo {
+    my ($reponame) = @_;
+    my ($vars, $response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    
+    $vars = "reponame=".$reponame;
+       
+    
+    ($response, %headers) = send_http_request('POST', $post_commands{backup_repo}, $vars);
+    return $response;
+}
+
+sub post_remote_backup_db {
+    my ($response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+       
+    
+    ($response, %headers) = send_http_request('POST', $post_commands{backup_db});
+    return $response;
+}
+
+sub post_remote_restore_db {
+    my ($backupname) = @_;
+    my ($vars, $response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path) || ! defined($backupname)) {
+        return;
+    }
+    
+    $vars = "backupname=".$backupname;
+       
+    
+    ($response, %headers) = send_http_request('POST', $post_commands{restore_db});
+    return $response;
+}
+
+sub post_remote_restore_repo {
+    my ($backupname) = @_;
+    my ($vars, $response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path) || ! defined($backupname)) {
+        return;
+    }
+    
+    $vars = "backupname=".$backupname;
+       
+    
+    ($response, %headers) = send_http_request('POST', $post_commands{restore_repo});
+    return $response;
+}
+
+sub get_remote_repo_backup_list {
+    my ($reponame) = @_;
+    my ($vars, $response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    
+    $vars = "reponame=".$reponame;
+       
+    
+    ($response, %headers) = send_http_request('GET', $post_commands{repo_backup_list}, $vars);
+    return $response;
+}
+
+sub get_remote_db_backup_list {
+    my ($reponame) = @_;
+    my ($response, %headers);
+    my $file_path = getcwd().'/.';
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }     
+    
+    ($response, %headers) = send_http_request('GET', $post_commands{db_backup_list});
+    return $response;
+}
+
 
 
 

@@ -16,6 +16,7 @@ use RepoManagement::Configuration qw($MYCVS_REPO_STORE $MYCVS_GLOBAL_BASEDIR $MY
 use RepoManagement::Init;
 use UserManagement::Impl;
 use VersionManagement::Impl;
+use RepoManagement::BackupRestoreImpl;
 
 $VERSION = 1.00;
 @ISA = qw(Exporter);
@@ -215,6 +216,9 @@ sub process_post {
             print "Processing 'user' Request\n";
             ($header, $content) = user_post_commands(get_sub_command($command_line), $user, %vars);
         }
+        when("backup") {
+            ($header, $content) = backup_post_commands(get_sub_command($command_line), $user, %vars);
+        }
         default {
             print "'".$command_line."' Not supported Request\n";
             return (not_supported_message($request_path), "");
@@ -255,6 +259,10 @@ sub process_get {
         when("repo") {
             print "Processing 'repo' Request\n";
             ($header, $data) = repo_get_commands(get_sub_command($command_line), $user, %vars);
+        }
+        when("backup") {
+            print "Processing 'backup' Request\n";
+            ($header, $data) = backup_get_commands(get_sub_command($command_line), $user, %vars);
         }
         default {
             print "'".$command_line."' Not supported Request\n";
@@ -688,23 +696,6 @@ sub user_post_commands {
                 return;
             }
         }
-        ###################################################################
-        when("/auth"){
-            print "Processing 'auth' Request\n";
-            my $username = $vars{'username'};
-            my $passhash = $vars{'pass'};
-            my $repo = $vars{'repo'};
-            
-            # TODO - FOUND BUG - WHEN USER EXISTS IN THE SYSTEM BUT NOT IN THE GROUP THE FUNCTION exist_user_in_group
-            # RETURNS HERE TRUE
-
-            $header = default_header(length($content), "");
-            if(authorize_user($username,$passhash) == 200 && exist_user_in_group($username,$repo)){
-                $content = 1;
-            } else {
-                $content = 0;
-            }
-        }
         default {
             return;
         }
@@ -740,6 +731,89 @@ sub user_delete_commands {
     
     return ($header, $content);
 }
+
+sub backup_get_commands {
+    my ($command, $user, %vars) = @_;
+    my $content;
+    my @tmp_lines;
+    my $header = "";
+    my $reponame = $vars{'reponame'};
+    if (! is_user_admin($user)) {
+        return (get_auth_message(), "");
+    }
+    
+    given(get_parent_command($command)) {
+        when("repolist") {
+            print "Processing 'repolist' Request\n";
+            return if ! defined($reponame);
+            my @backup_list = get_repo_backups($reponame);
+            return if ! @backup_list;
+            
+            $content = "";
+            foreach my $file(@backup_list) {
+                $content .= "$file\n";
+            }
+        }
+        when("dblist") {
+            print "Processing 'dblist' Request\n";
+            my @backup_list = get_db_backups();
+            return if ! @backup_list;
+            
+            $content = "";
+            foreach my $file(@backup_list) {
+                $content .= "$file\n";
+            }
+            
+        }
+        default {
+            return;
+        }   
+    }
+    
+    return ($header, $content);
+}
+
+sub backup_post_commands {
+    my ($command, $user, %vars) = @_;
+    my $content = "";
+    my @tmp_lines;
+    my $header = "";
+    my $reponame = $vars{'reponame'};
+    my $backupname = $vars{'backupname'};
+    
+    if (! is_user_admin($user)) {
+        return (get_auth_message(), "");
+    }
+    
+    given(get_parent_command($command)) {
+        when("restorerepo") {
+            print "Processing 'restorerepo' Request\n";
+            if (! defined($reponame) || !defined($backupname)) {
+                return;
+            }
+            
+        }
+        when("backuprepo") {
+            print "Processing 'backuprepo' Request\n";
+            if (! defined($reponame) || ! exists_group($reponame)) {
+                return;
+            }
+            
+            
+        }
+        when("restoredb") {
+            print "Processing 'backuprepo' Request\n";
+        }
+        when("backupdb") {
+            print "Processing 'backuprepo' Request\n";
+        }
+        default {
+            return;
+        }   
+    }
+    
+    return ($header, $content);
+}    
 
 sub authorize_user {
     my ($user, $password) = @_;
