@@ -39,7 +39,7 @@ given(shift(@ARGV)) {
     when ('clientconfig') {config();}
     when ('filelist') {filelist();}
     when ('backup') {backup(shift(@ARGV),shift(@ARGV));}
-    when ('restore') {restore(shift(@ARGV),shift(@ARGV));};
+    when ('restore') {restore(shift(@ARGV),shift(@ARGV),shift(@ARGV));};
     default { usage(); } 
 }
 
@@ -92,7 +92,7 @@ sub group {
 }
 
 sub get_revisions {
-    VersionManagement::Commands::print_revisions(shift)
+    VersionManagement::Commands::print_revisions(shift);
 }
 
 sub http_server {
@@ -109,18 +109,18 @@ sub filelist {
 
 sub backup {
     given(shift) {
-        when('repo') {RepoManagement::Commands::backup_repo(shift)}
-        when('db') {RepoManagement::Commands::backup_db()}
-        when('listdb') {RepoManagement::Commands::list_db_backups()}
-        when('listrepo') {RepoManagement::Commands::list_repo_backups(shift)}
+        when('repo') {RepoManagement::Commands::backup_repo(shift);}
+        when('db') {RepoManagement::Commands::backup_db();}
+        when('listdb') {RepoManagement::Commands::list_db_backups();}
+        when('listrepo') {RepoManagement::Commands::list_repo_backups(shift);}
         default {backup_usage();}
     }
 }
 
 sub restore {
     given(shift) {
-        when('repo') {}
-        when('db') {}
+        when('repo') {RepoManagement::Commands::restore_repo(shift,shift);}
+        when('db') {RepoManagement::Commands::restore_db(shift);}
         default {restore_usage();}
     }
 }
@@ -175,6 +175,6 @@ sub backup_usage {
 sub restore_usage {
     my $exe = basename($0);
     print "\nUSAGE:\n";
-    print "$exe restore repo <reponame> - Backup repository.\n";
-    print "$exe restore db              - Backup DataBase.\n";
+    print "$exe restore repo <reponame> <backupname> - Backup repository.\n";
+    print "$exe restore db                           - Backup DataBase.\n";
 }

@@ -193,6 +193,16 @@ sub not_found_message {
     return $message;
 }
 
+sub backup_restore_failure_message {
+    my ($method) = @_;
+    my $body = "$method failed.";
+    my $header = "HTTP/1.0 420 Method Failure\r\nContent-Type: text/plain\r\n";
+    my $content_len = "Content-Length: ".length($body)."\r\n\r\n";
+    my $message = $header.$content_len.$body;
+    return $message;
+}
+
+
 sub process_post {
     my ($request_path, $user, $pass, $data, $timestamp) = @_;
     my ($command_line, $command, $vars_line, $header, $content, %vars);
@@ -789,23 +799,47 @@ sub backup_post_commands {
         when("restorerepo") {
             print "Processing 'restorerepo' Request\n";
             if (! defined($reponame) || !defined($backupname)) {
-                return;
+                return (bad_request_message(), "");
             }
             
+            my $err = repo_restore_do($reponame, $backupname);
+            if ($err eq 0) {
+                return (backup_restore_failure_message('Repository restore'), "");
+            } elsif ($err eq 2) {
+                return (not_found_message(), "");
+            }
         }
         when("backuprepo") {
             print "Processing 'backuprepo' Request\n";
-            if (! defined($reponame) || ! exists_group($reponame)) {
-                return;
+            if (! defined($reponame)) {
+                return (bad_request_message(), "");
             }
             
+            if (!repo_backup_do($reponame)) {
+                return (backup_restore_failure_message('Repository backup'), "");
+            }
             
         }
         when("restoredb") {
             print "Processing 'backuprepo' Request\n";
+            if (!defined($backupname)) {
+                return (bad_request_message(), "");
+            }
+            
+            my $err = db_restore_do($backupname);
+            if ($err eq 0) {
+                return (backup_restore_failure_message('DataBase restore'), "");
+            } elsif ($err == 2) {
+                return (not_found_message(), "");
+            }
+            
         }
         when("backupdb") {
             print "Processing 'backuprepo' Request\n";
+            if (!db_backup_do()) {
+                return (backup_restore_failure_message('DataBase backup'), "");
+            }
+            
         }
         default {
             return;

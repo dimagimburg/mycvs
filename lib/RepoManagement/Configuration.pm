@@ -33,7 +33,7 @@ our $MYCVS_DB_BACKUP_STORE = $MYCVS_BACKUP_STORE.qw(/db);
 # Repo Backup Location
 our $MYCVS_REPO_BACKUP_STORE = $MYCVS_BACKUP_STORE.qw(/repo);
 # Backup file suffix
-our $MYCVS_BACKUP_SUFFIX = qw(/tgz);
+our $MYCVS_BACKUP_SUFFIX = qw(tgz);
 
 # Repository store location
 our $MYCVS_REPO_STORE = $MYCVS_GLOBAL_BASEDIR.qw(/repo);

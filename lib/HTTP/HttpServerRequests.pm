@@ -470,23 +470,23 @@ sub post_remote_restore_db {
     $vars = "backupname=".$backupname;
        
     
-    ($response, %headers) = send_http_request('POST', $post_commands{restore_db});
+    ($response, %headers) = send_http_request('POST', $post_commands{restore_db}, $vars);
     return $response;
 }
 
 sub post_remote_restore_repo {
-    my ($backupname) = @_;
+    my ($reponame, $backupname) = @_;
     my ($vars, $response, %headers);
     my $file_path = getcwd().'/.';
     
-    if (! check_http_prerequisites($file_path) || ! defined($backupname)) {
+    if (! check_http_prerequisites($file_path) || ! defined($backupname) || ! defined($reponame)) {
         return;
     }
     
-    $vars = "backupname=".$backupname;
+    $vars = "reponame=".$reponame."&backupname=".$backupname;
        
     
-    ($response, %headers) = send_http_request('POST', $post_commands{restore_repo});
+    ($response, %headers) = send_http_request('POST', $post_commands{restore_repo}, $vars);
     return $response;
 }
 
@@ -495,19 +495,18 @@ sub get_remote_repo_backup_list {
     my ($vars, $response, %headers);
     my $file_path = getcwd().'/.';
     
-    if (! check_http_prerequisites($file_path)) {
+    if (! check_http_prerequisites($file_path) || !defined($reponame)) {
         return;
     }
     
     $vars = "reponame=".$reponame;
        
     
-    ($response, %headers) = send_http_request('GET', $post_commands{repo_backup_list}, $vars);
+    ($response, %headers) = send_http_request('GET', $get_commands{repo_backup_list}, $vars);
     return $response;
 }
 
 sub get_remote_db_backup_list {
-    my ($reponame) = @_;
     my ($response, %headers);
     my $file_path = getcwd().'/.';
     
@@ -515,7 +514,7 @@ sub get_remote_db_backup_list {
         return;
     }     
     
-    ($response, %headers) = send_http_request('GET', $post_commands{db_backup_list});
+    ($response, %headers) = send_http_request('GET', $get_commands{db_backup_list});
     return $response;
 }
 

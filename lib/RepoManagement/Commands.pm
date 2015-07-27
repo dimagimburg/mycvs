@@ -57,27 +57,67 @@ sub create_user_config {
 }
 
 sub backup_repo {
+    my ($reponame) = @_;
+    die "You need to provide repository name.\n" if ! defined($reponame);
     
+    my $reply = post_remote_backup_repo($reponame);
+    print "Backup Completed successfully.\n" if defined($reply);
 }
 
 sub restore_repo {
+    my ($reponame, $backupname) = @_;
+    if (!defined($reponame) || !defined($backupname)) {
+        die "You need to specify reponame and backup name.\n";
+    }
     
+    print "You are going to overwrite all the repository files.\n";
+    print "Are you sure to restore repository?[y/n] (n - default) ";
+    my $answer = <STDIN>; chomp $answer;
+    if ($answer eq "y") {
+        my $reply = post_remote_restore_repo($reponame, $backupname);
+        print "Restore Completed successfully.\n" if defined($reply);
+    } else {
+        print "You decided to quit.\n";
+    }
 }
 
 sub backup_db {
-    
+    my $reply = post_remote_backup_db();
+    print "Backup Completed successfully.\n" if defined($reply);
 }
 
 sub restore_db {
+    my ($backupname) = @_;
+    if (!defined($backupname)) {
+        die "You need to specify backup name.\n";
+    }
     
+    print "You are going to overwrite all the repository files.\n";
+    print "Are you sure to restore repository?[y/n] (n - default) ";
+    my $answer = <STDIN>; chomp $answer;
+    if ($answer eq "y") {
+        my $reply = post_remote_restore_db($backupname);
+        print "Restore Completed successfully.\n" if defined($reply);
+    } else {
+        print "You decided to quit.\n";
+    }
 }
 
 sub list_repo_backups {
+    my ($reponame) = @_;
+    die "You need to provide repository name.\n" if ! defined($reponame);
     
+    my $reply = get_remote_repo_backup_list($reponame);
+    print "Listing remote backups for repository: '$reponame'.\n";
+    print "========================================================\n";
+    print $reply;
 }
 
 sub list_db_backups {
-    
+    my $reply = get_remote_db_backup_list();
+    print "Listing remote DataBase backups.\n";
+    print "========================================================\n";
+    print $reply;
 }
 
 1;

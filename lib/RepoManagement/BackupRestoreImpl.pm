@@ -8,6 +8,7 @@ use File::Basename;
 use File::Find;
 use File::Path qw(make_path remove_tree);
 use Cwd qw(realpath);
+use Cwd;
 use Archive::Tar;
 use Exporter qw(import);
 our @ISA = qw(Exporter);
@@ -19,7 +20,7 @@ our @EXPORT = qw(
                 
 # Internal libs
 use lib qw(../);
-#use VersionManagement::Impl;
+use VersionManagement::Impl;
 use UserManagement::Impl;
 use RepoManagement::Configuration qw(
                                 $MYCVS_DB_FOLDER $MYCVS_REPO_STORE
@@ -60,7 +61,8 @@ sub get_repo_backups {
 
 sub db_backup_do {
     my $dir     = $MYCVS_DB_FOLDER;
-    my $dstfile = "$MYCVS_DB_BACKUP_STORE/".format_time_stamp(time)."\.$MYCVS_BACKUP_SUFFIX";
+    my $timestring = format_time_stamp(time); chomp $timestring;
+    my $dstfile = "$MYCVS_DB_BACKUP_STORE/$timestring\.$MYCVS_BACKUP_SUFFIX";
     return create_archive($dir, $dstfile);
 }
 
@@ -71,7 +73,8 @@ sub repo_backup_do {
     }
     
     my $dir     = "$MYCVS_REPO_STORE/$reponame";
-    my $dstfile = "$MYCVS_REPO_BACKUP_STORE/$reponame/".format_time_stamp(time)."\.$MYCVS_BACKUP_SUFFIX";
+    my $timestring = format_time_stamp(time); chomp $timestring;
+    my $dstfile = "$MYCVS_REPO_BACKUP_STORE/$reponame/$timestring\.$MYCVS_BACKUP_SUFFIX";
     
     return create_archive($dir, $dstfile);
 }
@@ -79,18 +82,18 @@ sub repo_backup_do {
 sub db_restore_do {
     my ($backupname) = @_;
     my $srcfile = "$MYCVS_DB_BACKUP_STORE/$backupname\.$MYCVS_BACKUP_SUFFIX";
-    return 0 if ! -f $srcfile;
+    return 2 if ! -f $srcfile;
     
-    return extract_archive($srcfile, $MYCVS_DB_BACKUP_STORE);
+    return extract_archive($srcfile, $MYCVS_DB_FOLDER);
 }
 
 sub repo_restore_do {
-    my ($backupname, $reponame) = @_;
+    my ($reponame, $backupname) = @_;
     my $status = 1;
     my $srcfile = "$MYCVS_REPO_BACKUP_STORE/$reponame/$backupname\.$MYCVS_BACKUP_SUFFIX";
-    return 0 if ! -f $srcfile;
+    return 2 if ! -f $srcfile;
     
-    $status = extract_archive($srcfile, $MYCVS_DB_BACKUP_STORE);
+    $status = extract_archive($srcfile, "$MYCVS_REPO_STORE/$reponame");
     if ($status == 1 && ! exists_group($reponame)) {
         create_group_record($reponame);
     }
@@ -109,7 +112,7 @@ sub create_archive {
     
     $dir = realpath($dir);
     my $basedir = dirname($dir);
-    my $dstdir  = dirname(realpath($dstfile));
+    my $dstdir  = dirname($dstfile);
     if (!-d $dstdir) {
         make_path($dstdir) or return 0;
     }
