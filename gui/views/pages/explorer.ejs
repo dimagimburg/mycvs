@@ -6,6 +6,7 @@
 	<script src="/public/js/explorer/events.js"></script>
 </head>
 <body>
+	<div class="error alert alert-danger" role="alert"></div>
 	<div class="side-bar">
 		<div class="mycvs-logo">
 			MYCVS V1.0.0
@@ -58,33 +59,38 @@
 							</span>
 						</td>
 						<td>
-							last modified
 						</td>
 					</tr>
 				<% } %>
 				<% for(var i = 0; i < bottomList.directories.length; i++){ %>
-					<tr <% if(bottomList.directories[i][0] == '.'){ %>style="display:none;"<% } %>>
+					<tr <% if(bottomList.directories[i].directoryName[0] == '.'){ %>style="display:none;"<% } %>>
 						<td>
 							<span class="glyphicon glyphicon-folder-open folder-icon" aria-hidden="true"></span>
-							<span class="directory" data-path="<%= currentPathString + '/' + bottomList.directories[i]%>">
-								<%= bottomList.directories[i] %>
+							<span class="directory" data-path="<%= currentPathString + '/' + bottomList.directories[i].directoryName%>">
+								<%= bottomList.directories[i].directoryName %>
 							</span>
 						</td>
 						<td>
-							last modified
+							[<%= bottomList.directories[i].lastModified.toLocaleDateString(); %>] - 
+							[<%= ("0" + bottomList.directories[i].lastModified.getHours()).slice(-2)  %> :
+							<%= ("0" + bottomList.directories[i].lastModified.getMinutes()).slice(-2)  %> :
+							<%= ("0" + bottomList.directories[i].lastModified.getSeconds()).slice(-2)  %>]
 						</td>
 					</tr>
 				<% } %>
 				<% for(var i = 0; i < bottomList.files.length; i++){ %>
-					<tr <% if(bottomList.files[i][0] == '.'){ %>style="display: none;"<% } %>>
+					<tr <% if(bottomList.files[i].fileName[0] == '.'){ %>style="display: none;"<% } %>>
 						<td>
 							<span class="glyphicon glyphicon-file file-icon" aria-hidden="true"></span>
-							<span class="file" data-path="<%= currentPathString + '/' + bottomList.files[i]%>">
-								<%= bottomList.files[i] %>
+							<span class="file" data-path="<%= currentPathString + '/' + bottomList.files[i].fileName %>">
+								<%= bottomList.files[i].fileName %>
 							</span>
 						</td>
 						<td>
-							last modified
+							[<%= bottomList.files[i].lastModified.toLocaleDateString(); %>] - 
+							[<%= ("0" + bottomList.files[i].lastModified.getHours()).slice(-2)  %> :
+							<%= ("0" + bottomList.files[i].lastModified.getMinutes()).slice(-2)  %> :
+							<%= ("0" + bottomList.files[i].lastModified.getSeconds()).slice(-2)  %>]
 						</td>
 					</tr>
 				<% } %>

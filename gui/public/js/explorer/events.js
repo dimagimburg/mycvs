@@ -15,7 +15,12 @@ $(document).ready(function(){
 				newPath : clicked.data('path')
 			},
 			success : function(response){
-				$('body').html(response);
+				if(!response.error){
+					$('body').html(response);
+				} else {
+					$('.error').html(response.error);
+					$('.error').fadeIn().delay(1000).fadeOut();
+				}
 			}
 		});
 	}

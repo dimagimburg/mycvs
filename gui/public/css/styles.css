@@ -57,3 +57,15 @@ body{
 .side-bar .nav-links ul li span{
 	margin-right: 15px;
 }
+
+.error{
+	display: none;
+  	position: fixed;
+  	width: 500px;
+  	text-align: center;
+  	right: 0;
+  	left: 0;
+  	margin: auto;
+  	top: 21px;
+  	background-color: rgba(255, 0, 0, 0.16);
+}

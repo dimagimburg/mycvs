@@ -46,6 +46,10 @@ module.exports = function(){
 		var currentPath = splitPath(newPath);
 		var subPaths = getSubPaths(currentPath);
 		var bottomList = getDirectoryContent(newPath);
+		if(!bottomList){
+			res.json({error:'Can\'t access path. Access denied'}).end();
+			return;
+		}
 		var isRepository = checkIfRepository(newPath);
 
 		var upperPath = {
@@ -88,11 +92,19 @@ module.exports = function(){
 			directories : [],
 			files : []
 		};
-		var files = fs.readdirSync(path);
-		for(var i = 0; i < files.length; i++){
-			fs.lstatSync(path + '/' + files[i]).isDirectory() ? content.directories.push(files[i]) : content.files.push(files[i]);
+		try{
+			var files = fs.readdirSync(path);
+			for(var i = 0; i < files.length; i++){
+				var nextFile = fs.lstatSync(path + '/' + files[i]);
+				//console.log(nextFile);
+				var lastModified = nextFile.mtime;
+				nextFile.isDirectory() ? content.directories.push({ directoryName : files[i] , lastModified : new Date(lastModified) }) : content.files.push({fileName : files[i] , lastModified : new Date(lastModified)});
+			}
+			return content;
+		} catch (e) {
+			return false;
 		}
-		return content;
+		
 	};
 
 	// checks if exists .mycvs directory and config file
