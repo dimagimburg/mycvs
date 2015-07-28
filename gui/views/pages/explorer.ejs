@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<% include ../partials/head %>
+	<link rel="stylesheet" href="public/css/explorer.css">
+	<script src="/public/js/explorer/events.js"></script>
+</head>
+<body>
+	<div class="side-bar">
+		<div class="mycvs-logo">
+			MYCVS V1.0.0
+		</div>
+		<div class="nav-links">
+			<ul>
+				<li>
+					<span class="glyphicon glyphicon-list" aria-hidden="true"></span>Documentation
+				</li>
+			</ul>
+		</div>
+	</div><div class="body">
+		<div class="top-nav">
+			<% if(isRepository){ %>
+				<button type="button" class="btn btn-primary choose-directory">
+					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+					Select Repository
+				</button>
+			<% } else { %>
+			  	<button type="button" class="btn btn-success choose-directory">
+					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+					New Repository
+				</button>
+		  	<% } %>
+			
+		</div>
+		<div class="file-explorer">
+			<div class="path">
+				<span class="glyphicon glyphicon-folder-open" aria-hidden="true" style="color:#A9A7B5;"></span>
+				<% if(!upperPath.currentPath.length) { %>
+				<span class="separator">/</span>
+				<% } %>
+				<% for(var i = 0; i < upperPath.currentPath.length; i++) { %>
+	        		<span class="separator">/</span>
+	        		<span class="directory" data-path="<%= upperPath.subPaths[i] %>"><%= upperPath.currentPath[i] %></span>
+	    		<% } %>
+			</div>
+			<div class="directory-files">
+				<table class="table table-striped">
+					<tr>
+						<th>File Name</th>
+						<th>Last Modified</th>
+					</tr>
+					<% if(upperPath.currentPath.length > 1){ %>
+					<tr>
+						<td>
+							<span class="glyphicon glyphicon-folder-open folder-icon" aria-hidden="true"></span>
+							<span class="directory" data-path="<% var dotdot = upperPath.currentPath; dotdot.pop(); %><%= '/' + dotdot.join('/') %>">
+								..
+							</span>
+						</td>
+						<td>
+							last modified
+						</td>
+					</tr>
+				<% } %>
+				<% for(var i = 0; i < bottomList.directories.length; i++){ %>
+					<tr <% if(bottomList.directories[i][0] == '.'){ %>style="display:none;"<% } %>>
+						<td>
+							<span class="glyphicon glyphicon-folder-open folder-icon" aria-hidden="true"></span>
+							<span class="directory" data-path="<%= currentPathString + '/' + bottomList.directories[i]%>">
+								<%= bottomList.directories[i] %>
+							</span>
+						</td>
+						<td>
+							last modified
+						</td>
+					</tr>
+				<% } %>
+				<% for(var i = 0; i < bottomList.files.length; i++){ %>
+					<tr <% if(bottomList.files[i][0] == '.'){ %>style="display: none;"<% } %>>
+						<td>
+							<span class="glyphicon glyphicon-file file-icon" aria-hidden="true"></span>
+							<span class="file" data-path="<%= currentPathString + '/' + bottomList.files[i]%>">
+								<%= bottomList.files[i] %>
+							</span>
+						</td>
+						<td>
+							last modified
+						</td>
+					</tr>
+				<% } %>
+				</table>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

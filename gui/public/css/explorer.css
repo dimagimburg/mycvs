@@ -1,0 +1,64 @@
+/* file system explorer */
+
+.file-explorer{
+	padding: 15px;
+  	text-align: center;
+}
+
+.path{
+	color: #8C8C8C;
+  	text-align: left;
+  	padding: 5px 0;
+}
+
+.separator{
+	margin:0 3px;
+}
+
+.directory{
+	color: #0090d0;
+}
+
+.directory-files{
+	background: #ffffff;
+  	text-align: left;
+  	color: #000000;
+  	overflow-y: scroll;
+  	max-height: 500px;
+}
+
+.enterable{
+	padding: 3px;
+	color: #0090d0;
+}
+
+.file-icon,.folder-icon{
+	margin-right:8px;
+}
+
+.folder-icon{
+	color: #EBBB54;
+  	margin-left: 5px;
+}
+
+.file-icon{
+	color: #2D5970;
+  	margin-left: 5px;
+}
+
+.directory,.file{
+	cursor: pointer;
+}
+
+.directory:hover,.file:hover{
+	text-decoration: underline;
+}
+
+.directory-files table{
+	border: 1px solid #ddd; 
+	margin-bottom: 0px;
+}
+
+.directory-files th:last-child{
+	width: 25%;
+}

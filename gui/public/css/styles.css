@@ -1,0 +1,59 @@
+*{
+	margin:0;
+	padding:0;
+	font-family: 'roboto';
+}
+
+html{
+	background: #14243d !important;
+	background: radial-gradient(ellipse at center, #14243d 0%,#030611 100%);
+	width:100%;
+	height:100%;
+}
+
+body{
+	height: 100%;
+}
+
+.body{
+	display: inline-block;
+	vertical-align: top;
+	background: #F2F2F2 !important;
+	width: 85%;
+	height: 100%;
+	color: #ffffff;
+}
+
+.side-bar{
+  	display: inline-block;
+  	background: #595669;
+  	height: 100%;
+  	width: 15%;
+  	vertical-align: top;
+}
+
+.top-nav{
+	background: #fff;
+	color: #000;
+  	padding: 10px;
+}
+
+.mycvs-logo{
+	padding: 10px;
+	background: #4D4B5B;
+	text-align: center;
+	font-weight: 400;
+	font-size: 25px;
+	color: #ffffff;
+}
+
+.side-bar .nav-links ul li{
+	padding: 15px;
+  	color: #fff;
+  	font-size: 17px;
+  	border-bottom: 1px solid #767677;
+}
+
+.side-bar .nav-links ul li span{
+	margin-right: 15px;
+}

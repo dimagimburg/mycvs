@@ -134,6 +134,7 @@ sub default_header {
     
     $header .= $aditional_header;
     $header .= "Content-Type: text/plain\r\n";
+    $header .= "Access-Control-Allow-Origin: *\r\n";
     $header .= "Content-Lenght: ".$body_len."\r\n\r\n";
     
     return $header;
