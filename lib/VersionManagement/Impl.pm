@@ -17,7 +17,7 @@ our @EXPORT = qw(
                 set_file_time is_file_locked get_locked_user save_string_to_new_file
                 get_timestamp get_merged_plain_file lock_file unlock_file is_file_locked
                 delete_file get_dir_contents_recur print_revisions_to_array
-                get_diff_on_two_files
+                get_diff_on_two_files mark_last_user get_last_user
                 );
 # Internal libs
 use lib qw(../);
@@ -58,6 +58,60 @@ sub make_checkin {
     
     copy $file_path, $next_revision_file;
     set_file_time($next_revision_file,get_file_time($file_path));
+}
+# Saves the last user that did checkin
+sub mark_last_user {
+    my ($filename, $username) = @_;
+    if (!defined($filename) || ! -f $filename) {
+        return;
+    }
+    my $marker_file = get_last_user_marker($filename);
+    print $marker_file."\n";
+    print $filename."\n";
+    if (defined($marker_file)) {
+        my $dir = dirname($filename);
+        delete_file("$dir/$marker_file");
+    }
+    save_string_to_new_file("", $filename.'.last_checkin.'.$username);
+    
+}
+# Gets last user that made checkin on file
+sub get_last_user {
+    my ($file_path) = @_;
+    my ($username, $marker_file, @splitted);
+    $marker_file = get_last_user_marker($file_path);
+    
+    if (defined($marker_file)) {
+        @splitted = split('\.', $marker_file);
+        $username = $splitted[-1];
+        return $username;
+    } else {
+        return;
+    }
+}
+# Gets last user marker file
+sub get_last_user_marker {
+    my ($filename) = @_;
+    return if ! defined($filename);
+    my @files = ();
+    my $dir = dirname($filename);
+    $filename = basename($filename);
+    
+    
+    if (! -d $dir) {
+        return; # Return undef
+    }
+    
+    opendir(dir_handle, $dir);
+    
+    @files = grep {/\Q${filename}.last_checkin\E/} readdir dir_handle;
+    
+    closedir(dir_handle);
+    if (@files) {
+        return $files[0];
+    } else {
+        return;
+    }
 }
 
 # Returns merged file lines array at specific revision
@@ -241,7 +295,6 @@ sub get_diff_on_two_files {
         if ($old_counter >= $old_len) {
             # We reached end on old file but not new file.
             # Lets save it
-            print "we are here\n";
             push @diff, '+ '.($old_counter+1).' '.$new_lines[$old_counter];
             next;
         }
@@ -342,7 +395,8 @@ sub _wanted {
 
    $File::Find::name =~ s/^${dir}//;
    return if $File::Find::name eq "";
-   return if $File::Find::name =~ /lock/;
+   return if $File::Find::name =~ /\.lock\./;
+   return if $File::Find::name =~ /\.last_checkin\./;
 
    push( @$files, $File::Find::name ) if $File::Find::name!~ /\.mycvs/;
 }
@@ -388,8 +442,11 @@ sub unlock_file {
     if (!defined($file_path)) {
         return;
     }
-    
-    delete_file(get_lock_file($file_path));
+    my $dir = dirname($file_path);
+    my $lock_file_name = get_lock_file($file_path);
+    if (defined($lock_file_name)) {
+        delete_file("$dir/$lock_file_name");
+    }
 }
 
 # Checks if file locked.

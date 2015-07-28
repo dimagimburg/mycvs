@@ -27,6 +27,19 @@ sub checkin_file {
     my ($file_path) = @_;
     die "You must provide at least filename to this command.\n" if ! defined $file_path;
     die "Local file not found.\n" if ! -f $file_path;
+    
+    my ($current_user, $last_user) = get_remote_last_user(realpath($file_path));
+    if (defined($last_user) && ($last_user ne $current_user)) {
+        print "Last checkin not made by you.\n";
+        print "Last user that made checkin is: '$last_user'.\n";
+        print "If not sure, you can view diff before checkin.\n";
+        print "Do you want to force checkin? [y/n] (n - default) ";
+        my $answer = <STDIN>; chomp $answer;
+        if ($answer ne "y") {
+            die "Canceling checkin...\n";
+        }
+    }
+    
     my $reply = post_remote_checkin(realpath($file_path));
     die "Can't checkin.\n" if ! defined($reply);
     print $reply;

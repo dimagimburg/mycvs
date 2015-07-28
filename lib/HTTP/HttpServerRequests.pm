@@ -18,7 +18,7 @@ our @EXPORT = qw(
                 delete_remote_repo delete_remote_repo_perm
                 post_remote_repo_perm post_remote_add_user
                 post_remote_user_del get_remote_listrepos
-                get_remote_repo_members get_remote_timestamp
+                get_remote_repo_members get_remote_timestamp get_remote_last_user
                 post_remote_backup_repo post_remote_backup_db
                 post_remote_restore_repo post_remote_restore_db
                 get_remote_repo_backup_list get_remote_db_backup_list
@@ -42,6 +42,7 @@ our %get_commands = (
                 get_filelist     => '/repo/filelist',
                 get_listrepos    => '/repo/listrepos',
                 get_repo_members => '/repo/members',
+                get_last_user    => '/repo/lastuser',
                 repo_backup_list => '/backup/repolist',
                 db_backup_list   => '/backup/dblist'
                 );
@@ -247,8 +248,9 @@ sub post_remote_checkin {
     my %options   = parse_config_line($file_path);
     my $reporoot  = get_repo_root($file_path);
     my $timestamp = get_file_time($file_path);
+    my $remote_timestamp = get_remote_timestamp($file_path);
     
-    if ($timestamp eq get_remote_timestamp($file_path)) {
+    if ($timestamp eq $remote_timestamp) {
         return "TimeStamp not changed. Nothing to checkin.\n";
     }
     
@@ -272,7 +274,7 @@ sub post_remote_checkin {
 
 sub get_remote_timestamp {
     my ($file_path) = @_;
-    my ($vars, $response, $local_file_path, @file_lines, %headers);
+    my ($vars, $response, %headers);
     
     if (! check_http_prerequisites($file_path)) {
         return;
@@ -281,7 +283,6 @@ sub get_remote_timestamp {
     my $reporoot = get_repo_root($file_path);
     my $timestamp;
     
-    $local_file_path = $file_path;
     $file_path =~ s/${reporoot}//;
     $vars = "reponame=".$options{reponame}."&filename=".$file_path;
     
@@ -289,6 +290,25 @@ sub get_remote_timestamp {
                                               $get_commands{get_timestamp},
                                               $vars);
     return $headers{'time-stamp'};
+}
+
+sub get_remote_last_user {
+    my ($file_path) = @_;
+    my ($vars, $response, %headers);
+    
+    if (! check_http_prerequisites($file_path)) {
+        return;
+    }
+    my %options = parse_config_line($file_path);
+    my $reporoot = get_repo_root($file_path);
+    
+    $file_path =~ s/${reporoot}//;
+    $vars = "reponame=".$options{reponame}."&filename=".$file_path;
+    
+    ($response, %headers) = send_http_request('GET',
+                                              $get_commands{get_last_user},
+                                              $vars);
+    return ($options{user}, $response);
 }
 
 sub get_remote_repo_content {

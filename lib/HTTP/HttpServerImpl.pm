@@ -471,14 +471,27 @@ sub repo_get_commands {
             $timestamp = get_timestamp($file, $revision);
             
             if (!defined($timestamp)) {
-                #$header = "Time-Stamp: ".$timestamp."\r\n";
-                #$content = $header;
                 $timestamp = -1;
-            } else {
-                #return;
             }
+            
             $header = "Time-Stamp: ".$timestamp."\r\n";
             $content = $header;
+        }
+        when("lastuser") {
+            print "Processing 'lastuser' Request\n";
+            return if ! defined($reponame);
+            return (get_auth_message(), "") if ! exist_user_in_group($user, $reponame);
+            return if ! defined($filename);
+            
+            my $file = $MYCVS_REPO_STORE.'/'.$reponame.$filename;
+            my $username = get_last_user($file, $user);
+            
+            if (!defined($username)) {
+                $username = 'None';
+            }
+            
+            $header = "";
+            $content = "$username";
         }
         when("filelist") {
             print "Processing 'filelist' Request\n";
@@ -605,6 +618,7 @@ sub repo_post_commands {
             } else {
                 $header = "";
                 $content = "";
+                mark_last_user($real_file_path, $user);
             }
 
         }
