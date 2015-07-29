@@ -62,3 +62,7 @@
 .directory-files th:last-child{
 	width: 30%;
 }
+
+.is-repository{
+	color: #46B32F;
+}

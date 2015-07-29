@@ -21,12 +21,12 @@
 	</div><div class="body">
 		<div class="top-nav">
 			<% if(isRepository){ %>
-				<button type="button" class="btn btn-primary choose-directory">
+				<button type="button" class="btn btn-success choose-directory">
 					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
 					Select Repository
 				</button>
 			<% } else { %>
-			  	<button type="button" class="btn btn-success choose-directory">
+			  	<button type="button" class="btn btn-primary choose-directory">
 					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
 					New Repository
 				</button>
@@ -66,7 +66,7 @@
 					<tr <% if(bottomList.directories[i].directoryName[0] == '.'){ %>style="display:none;"<% } %>>
 						<td>
 							<span class="glyphicon glyphicon-folder-open folder-icon" aria-hidden="true"></span>
-							<span class="directory" data-path="<%= currentPathString + '/' + bottomList.directories[i].directoryName%>">
+							<span class="directory <% if(bottomList.directories[i].isRepository){ %>is-repository<% } %>" data-path="<%= currentPathString + '/' + bottomList.directories[i].directoryName%>">
 								<%= bottomList.directories[i].directoryName %>
 							</span>
 						</td>

@@ -95,10 +95,16 @@ module.exports = function(){
 		try{
 			var files = fs.readdirSync(path);
 			for(var i = 0; i < files.length; i++){
-				var nextFile = fs.lstatSync(path + '/' + files[i]);
+				var filePath = path + '/' + files[i];
+				var nextFile = fs.lstatSync(filePath);
 				//console.log(nextFile);
 				var lastModified = nextFile.mtime;
-				nextFile.isDirectory() ? content.directories.push({ directoryName : files[i] , lastModified : new Date(lastModified) }) : content.files.push({fileName : files[i] , lastModified : new Date(lastModified)});
+				var isRepository = checkIfRepository(filePath);
+				if(nextFile.isDirectory()){
+					content.directories.push({ directoryName : files[i] , lastModified : new Date(lastModified) , isRepository : isRepository });
+				} else {
+					content.files.push({fileName : files[i] , lastModified : new Date(lastModified)});
+				} 
 			}
 			return content;
 		} catch (e) {
