@@ -20,6 +20,14 @@ module.exports = function(){
 				console.log(process.cwd());
 				chooseDirectory(postParams.currentPath,res);
 				break;
+			case 'createRepository':
+				createRepository(postParams.currentPath);
+				res.json({'error':'0'});
+				res.end();
+				break;
+			case 'createConfig':
+				createConfig(postParams,res);
+				break;
 		}
 	});
 
@@ -110,7 +118,6 @@ module.exports = function(){
 		} catch (e) {
 			return false;
 		}
-		
 	};
 
 	// checks if exists .mycvs directory and config file
@@ -148,6 +155,19 @@ module.exports = function(){
 	var checkIfRepository = function(pathString){
 		var configFilePath = path.join(pathString, '.mycvs', 'config');
 		return fs.existsSync(configFilePath);
+	}
+
+	var createRepository = function(currentPath){
+		fs.mkdirSync(path.join(currentPath, '.mycvs'));
+	}
+
+	var createConfig = function(params,res){
+		var fileName = path.join(params.path,'.mycvs','config');
+		var config = params.config;
+		var configLine = config.username + ':' + config.password + ':' + config.reponame + ':' + config.server + ':' + config.port;
+		console.log(fileName,configLine);
+		fs.appendFileSync(fileName,configLine);
+		changePath(params.path,res);
 	}
 
 	return app;
