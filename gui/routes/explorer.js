@@ -3,6 +3,8 @@ module.exports = function(){
   	var app = express();
   	var fs = require('fs');
   	var path = require('path');
+	var request = require('request');
+	var Promise = require('promise');
 
   	app.get('/', function(req, res) {
   		console.log('explorer route');	
@@ -167,7 +169,31 @@ module.exports = function(){
 		var configLine = config.username + ':' + config.password + ':' + config.reponame + ':' + config.server + ':' + config.port;
 		console.log(fileName,configLine);
 		fs.appendFileSync(fileName,configLine);
-		changePath(params.path,res);
+		addRepoToServer(config.reponame,config.username,config.password)
+			.then(function(success,error){
+				changePath(params.path,res);	
+			});
+	}
+
+	var addRepoToServer = function(reponame,username,password){
+		var usernamePasswordBase64 = new Buffer(username + ':' + password).toString('base64');
+		var promise = new Promise(function(resolve,reject){
+			request({
+				method: 'POST',
+				url: 'http://localhost:8080/repo/add?reponame=' + reponame,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				console.log(err, resp, body);
+				if(err == null){ 
+					resolve(body); 
+				} else {
+					reject(error);
+				}
+			});		
+		});
+		return promise;
 	}
 
 	return app;
