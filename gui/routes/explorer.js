@@ -19,7 +19,6 @@ module.exports = function(){
 				break;
 			case 'chooseDirectory':
 				process.chdir(postParams.currentPath);
-				console.log(process.cwd());
 				chooseDirectory(postParams.currentPath,res);
 				break;
 			case 'createRepository':
@@ -37,41 +36,49 @@ module.exports = function(){
 		var currentPathString = getUserHome();
 		var currentPath = splitPath(currentPathString);
 		var subPaths = getSubPaths(currentPath);
-		var bottomList = getDirectoryContent(currentPathString);
 		var isRepository = checkIfRepository(currentPathString);
-
-		var upperPath = {
-			currentPath : currentPath,
-			subPaths : subPaths
-		};
-		res.render('pages/explorer',{
-			currentPathString : currentPathString,
-			upperPath : upperPath,
-			bottomList : bottomList,
-			isRepository : isRepository
+		var bottomList;
+		getDirectoryContent(currentPathString).then(function(content){
+			bottomList = content;
+			var upperPath = {
+				currentPath : currentPath,
+				subPaths : subPaths
+			};
+			res.render('pages/explorer',{
+				currentPathString : currentPathString,
+				upperPath : upperPath,
+				bottomList : bottomList,
+				isRepository : isRepository
+			});
 		});
 	}
 
 	var changePath = function(newPath,res) {
 		var currentPath = splitPath(newPath);
 		var subPaths = getSubPaths(currentPath);
-		var bottomList = getDirectoryContent(newPath);
-		if(!bottomList){
-			res.json({error:'Can\'t access path. Access denied'}).end();
-			return;
-		}
-		var isRepository = checkIfRepository(newPath);
+		var bottomList;
+		getDirectoryContent(newPath).then(function(content){
+			bottomList = content;
+			if(!bottomList){
+				res.json({error:'Can\'t access path. Access denied'}).end();
+				return;
+			}
+			var isRepository = checkIfRepository(newPath);
 
-		var upperPath = {
-			currentPath : currentPath,
-			subPaths : subPaths
-		};
+			var upperPath = {
+				currentPath : currentPath,
+				subPaths : subPaths
+			};
 
-		res.render('pages/explorer',{
-			currentPathString : newPath,
-			upperPath : upperPath,
-			bottomList : bottomList,
-			isRepository : isRepository
+			res.render('pages/explorer',{
+				currentPathString : newPath,
+				upperPath : upperPath,
+				bottomList : bottomList,
+				isRepository : isRepository
+			});
+		}, function(rej){
+			res.json({error:rej}).end();
+				return;
 		});
 	}	
 
@@ -96,30 +103,57 @@ module.exports = function(){
 		return subPaths;
 	}
 
+	var getFilesProperties = function(content,path,files,remoteFilesList){
+		for(var i = 0; i < files.length; i++){
+			var filePath = path + '/' + files[i];
+			var nextFile = fs.lstatSync(filePath);
+			var lastModified = nextFile.mtime;
+			var isRepository = checkIfRepository(filePath);
+			var inRepo = isInRepo(filePath);
+			var inRemote = false;
+			if(remoteFilesList && remoteFilesList.indexOf(files[i]) > -1){
+				inRemote = true;
+			}
+			if(nextFile.isDirectory()){
+				content.directories.push({ directoryName : files[i] , lastModified : new Date(lastModified) , isRepository : isRepository , inRepo : inRepo });
+			} else {
+				content.files.push({fileName : files[i] , lastModified : new Date(lastModified) , inRepo : inRepo , inRemote : inRemote });
+			} 
+		}
+		return content;
+	}
+
 	// returns object with 2 arrays of directories and files in path
 	var getDirectoryContent = function(path){
-		var content = {
-			directories : [],
-			files : []
-		};
-		try{
-			var files = fs.readdirSync(path);
-			for(var i = 0; i < files.length; i++){
-				var filePath = path + '/' + files[i];
-				var nextFile = fs.lstatSync(filePath);
-				//console.log(nextFile);
-				var lastModified = nextFile.mtime;
-				var isRepository = checkIfRepository(filePath);
-				if(nextFile.isDirectory()){
-					content.directories.push({ directoryName : files[i] , lastModified : new Date(lastModified) , isRepository : isRepository });
-				} else {
-					content.files.push({fileName : files[i] , lastModified : new Date(lastModified)});
-				} 
-			}
-			return content;
-		} catch (e) {
-			return false;
-		}
+		var promise = new Promise(function(resolve,reject){
+				var content = {
+					directories : [],
+					files : []
+				};
+				try{
+					var config = getConfig(path);
+					var files = fs.readdirSync(path);
+					if(config){
+						getRemoteFileList(config)
+							.then(function(remoteFilesList){
+								// there is remote file list for this repo
+								content = getFilesProperties(content,path,files,remoteFilesList);
+								resolve(content);
+							}, function(){
+								// no file list fo repo
+								content = getFilesProperties(content,path,files);
+								resolve(content);
+							});
+					} else {
+						content = getFilesProperties(content,path,files);
+						resolve(content);
+					}
+				} catch (e) {
+					console.log(e);
+					reject(false);
+				}
+		});
+		return promise;
 	};
 
 	// checks if exists .mycvs directory and config file
@@ -151,6 +185,17 @@ module.exports = function(){
 			reponame : configArray[2],
 			username : configArray[3],
 			password : configArray[4],
+		}
+	}
+
+	var getConfigLine = function(pathToConfigFile){
+		return fs.readFileSync(pathToConfigFile).toString();
+	}
+
+	var getConfig = function(pathOfDirectory){
+		var configFilePath = path.join(pathOfDirectory , '.mycvs' , 'config');
+		if(fs.existsSync(configFilePath)){
+			return parseConfig(getConfigLine(configFilePath));
 		}
 	}
 
@@ -194,6 +239,56 @@ module.exports = function(){
 			});		
 		});
 		return promise;
+	}
+
+	/** returns true if file is in repo folder (if some of his root nodes has .mycvs/config file) */
+	var isInRepo = function(filePath){
+		var subPaths = getSubPaths(splitPath(filePath));
+		for(var i = subPaths.length - 2; i > 0; i--){
+			var repoPathToCheck = path.join(subPaths[i],'.mycvs','config');
+			if(fs.existsSync(repoPathToCheck)){
+				return filePath;
+			}
+		}
+		return false;
+	}
+
+	/* get remote file list with config, if there is no config return false. */
+	var getRemoteFileList = function(config){
+		if(config){
+			var username = config.username;
+			var password = config.password;
+			var reponame = config.reponame;
+			var server = config.server + ':' + config.port;
+			usernamePasswordBase64 = new Buffer(username + ':' + password).toString('base64');
+			//process.chdir('/home/dima/Desktop/another-test');
+			console.log(username,password,reponame,server);
+			var promise = new Promise(function(resolve,reject){
+				request({
+					method: 'GET',
+					url: 'http://' + server + '/repo/filelist?reponame=' + reponame,
+					headers : {
+						"Authorization" : "Basic " + usernamePasswordBase64
+					}
+				}, function(err, resp, body){
+					//console.log(err, resp, body);
+					console.log(err,'in the promise error');
+					if(err == null){
+						console.log(body);
+						resolve(body); 
+					} else {
+						reject(err);
+					}
+				});		
+			});
+			return promise;
+		} else {
+			return false;
+		}
+	}
+
+	var fileInRemoteList = function(fileName,remoteFilesList){
+
 	}
 
 	return app;

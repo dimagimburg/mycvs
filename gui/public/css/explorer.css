@@ -25,6 +25,7 @@
   	color: #000000;
   	overflow-y: scroll;
   	max-height: 500px;
+	height: 95%;
 }
 
 .enterable{
@@ -70,4 +71,16 @@
 .modal-body h3{
 	color: #3D83BD;
 	font-size:20px;
+}
+
+.in-repo{
+	color: red;
+}
+
+.in-remote{
+	color: green;
+}
+
+.directory.in-repo{
+	color: purple;
 }

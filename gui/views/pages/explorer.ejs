@@ -4,72 +4,15 @@
 	<% include ../partials/head %>
 	<link rel="stylesheet" href="public/css/explorer.css">
 	<script src="/public/js/explorer/events.js"></script>
+	<link rel="stylesheet" href="public/css/map-legend.css">
+
 </head>
 <body>
 	<div class="error alert alert-danger" role="alert"></div>
 
-	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-	  <div class="modal-dialog" role="document">
-	    <div class="modal-content">
-	      <div class="modal-header">
-	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-	        <h4 class="modal-title" id="myModalLabel">Please fill the next form to config your repository	</h4>
-	      </div>
-	      <div class="modal-body">
-      		<div>
-      			<form id="create-repository-form">
-      				<h3>Admin details</h3>
-  					<div class="form-group">
-				    	<label for="username">Username</label>
-				    	<input type="text" class="form-control" id="username" placeholder="Username" required>
-				  	</div>
-				  	<div class="form-group">
-				    	<label for="password">Password</label>
-				    	<input type="password" class="form-control" id="password" placeholder="Password" required>
-				  	</div>
-				  	<h3>Repository details</h3>
-				  	<div class="form-group">
-				    	<label for="reponame">Repository Name</label>
-				    	<input type="text" class="form-control" id="reponame" placeholder="Repository name" required>
-				  	</div>
-				  	<h3>Server Details</h3>
-				  	<div class="form-group">
-				    	<label for="serveraddres">Server address</label>
-				    	<input type="text" class="form-control" id="serveraddres" placeholder="Server address" required>
-				  	</div>
-				  	<div class="form-group">
-				    	<label for="serverport">Server port</label>
-				    	<input type="text" class="form-control" id="serverport" placeholder="Server port" required>
-				  	</div>
-      			</form>
-      		</div>
-	      </div>
-	      <div class="modal-footer">
-	        <button type="button" class="btn btn-default close-create-repository-button" data-dismiss="modal">Close</button>
-	        <button type="submit" class="btn btn-primary create-repository-button" form="create-repository-form">Create Repository</button>
-	      </div>
-	    </div>
-	  </div>
-	</div>
+	<% include ../partials/config-create-form %>
 
-	<div class="side-bar">
-		<div class="mycvs-logo">
-			MYCVS V1.0.0
-		</div>
-		<div class="nav-links">
-			<ul>
-				<li>
-					<span class="glyphicon glyphicon-list" aria-hidden="true"></span>Documentation
-				</li>
-				<li>
-					<span class="glyphicon glyphicon-pawn" aria-hidden="true"></span>Add user
-				</li>
-				<li>
-					<span class="glyphicon glyphicon-king" aria-hidden="true"></span>Add admin
-				</li>
-			</ul>
-		</div>
-	</div><div class="body">
+	<% include ../partials/side-bar %><div class="body">
 		<div class="top-nav">
 			<% if(isRepository){ %>
 				<button type="button" class="btn btn-success choose-directory">
@@ -82,7 +25,7 @@
 					New Repository
 				</button>
 		  	<% } %>
-			
+			<% include ../partials/map-legend %>
 		</div>
 		<div class="file-explorer">
 			<div class="path">
@@ -117,7 +60,10 @@
 					<tr <% if(bottomList.directories[i].directoryName[0] == '.'){ %>style="display:none;"<% } %>>
 						<td>
 							<span class="glyphicon glyphicon-folder-open folder-icon" aria-hidden="true"></span>
-							<span class="directory <% if(bottomList.directories[i].isRepository){ %>is-repository<% } %>" data-path="<%= currentPathString + '/' + bottomList.directories[i].directoryName%>">
+							<span class="directory 
+								<% if(bottomList.directories[i].isRepository){ %>is-repository<% } %>
+								<% if(bottomList.directories[i].inRepo){ %>in-repo<% } %>
+								" data-path="<%= currentPathString + '/' + bottomList.directories[i].directoryName%>">
 								<%= bottomList.directories[i].directoryName %>
 							</span>
 						</td>
@@ -133,7 +79,12 @@
 					<tr <% if(bottomList.files[i].fileName[0] == '.'){ %>style="display: none;"<% } %>>
 						<td>
 							<span class="glyphicon glyphicon-file file-icon" aria-hidden="true"></span>
-							<span class="file" data-path="<%= currentPathString + '/' + bottomList.files[i].fileName %>">
+							<span class="file
+							<% if(bottomList.files[i].inRepo){ %>
+								in-repo
+								<% if(bottomList.files[i].inRemote){ %> in-remote <% } %>
+							<% } %>
+							" data-path="<%= currentPathString + '/' + bottomList.files[i].fileName %>">
 								<%= bottomList.files[i].fileName %>
 							</span>
 						</td>
