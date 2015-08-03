@@ -271,8 +271,6 @@ module.exports = function(){
 						"Authorization" : "Basic " + usernamePasswordBase64
 					}
 				}, function(err, resp, body){
-					//console.log(err, resp, body);
-					console.log(err,'in the promise error');
 					if(err == null){
 						console.log(body);
 						resolve(body); 
@@ -287,9 +285,13 @@ module.exports = function(){
 		}
 	}
 
-	var fileInRemoteList = function(fileName,remoteFilesList){
-
+	var userPassToBase64 = function(username,password){
+		return new Buffer(username + ':' + password).toString('base64');
 	}
+
+	app.checkIfRepository = checkIfRepository;
+	app.getConfig = getConfig;
+	app.userPassToBase64 = userPassToBase64;
 
 	return app;
 }();

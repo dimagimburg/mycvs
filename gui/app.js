@@ -1,6 +1,7 @@
 var express = require('express');
 var explorer = require('./routes/explorer');
 var manage = require('./routes/manage');
+var user = require('./routes/api/user');
 var fs = require('fs');
 var path = require('path');
 var bodyParser = require('body-parser')
@@ -18,7 +19,8 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 
 app.use("/public", express.static(__dirname + '/public'));
 app.use('/', explorer);
-app.use('/manage', manage)
+app.use('/manage', manage);
+app.use('/api/user', user);
 
 server.listen(3000,function(){
 	console.log('Server started at http://localhost:3000');

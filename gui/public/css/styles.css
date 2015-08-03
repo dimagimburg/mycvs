@@ -47,14 +47,20 @@ body{
 	color: #ffffff;
 }
 
-.side-bar .nav-links ul li{
+.side-bar .nav-links .nav-link{
 	padding: 15px;
   	color: #fff;
   	font-size: 17px;
   	border-bottom: 1px solid #767677;
+  	cursor: pointer;
+  	transition: all 250ms;
 }
 
-.side-bar .nav-links ul li span{
+.side-bar .nav-links .nav-link:hover{
+	background: #757289;
+}
+
+.side-bar .nav-links .nav-link span{
 	margin-right: 15px;
 }
 
@@ -68,4 +74,16 @@ body{
   	margin: auto;
   	top: 21px;
   	background-color: rgba(255, 0, 0, 0.16);
+}
+
+.success{
+	display: none;
+  	position: fixed;
+  	width: 500px;
+  	text-align: center;
+  	right: 0;
+  	left: 0;
+  	margin: auto;
+  	top: 21px;
+  	background-color: rgba(0, 255, 0, 0.16);
 }

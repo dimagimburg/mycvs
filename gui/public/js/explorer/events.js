@@ -6,8 +6,7 @@ $(document).ready(function(){
 	$('.directory').click(function(){ changePath($(this)); });
 	$('.choose-directory').click(function(){ chooseDirectory(currentPath); });
 	$('.create-repository').click(function(){ openCreateRepositoryForm(currentPath); });
-	$('#create-repository-form').submit(function(event){  createRepository(); event.preventDefault();});
-	
+	$('#create-repository-form').submit(function(event){ createRepository(); event.preventDefault();});
 
 	var changePath = function(clicked){
 		console.log('change dir to: ' + clicked.data('path'));
@@ -22,7 +21,7 @@ $(document).ready(function(){
 				if(!response.error){
 					$('body').html(response);
 				} else {
-					$('.error').html(response.error);
+					$('.error').find('.error-message').html(response.error);
 					$('.error').fadeIn().delay(1000).fadeOut();
 				}
 			}
@@ -55,7 +54,7 @@ $(document).ready(function(){
 			},
 			success : function(response){
 				if(!parseInt(response.error)){
-					$('#myModal').modal();
+					$('#create-repository').modal();
 				}
 			}
 		});
@@ -74,7 +73,7 @@ $(document).ready(function(){
 				config : config 
 			},
 			success : function(response){
-				$('#myModal').modal('hide');
+				$('#create-repository').modal('hide');
 				$('body').html(response);
 			}
 		});
@@ -90,6 +89,22 @@ $(document).ready(function(){
 			port : createRepositoryForm.find('#serverport').val()
 		};
 		return config;
+	}
+
+	var isInRepository = function(){
+		$.ajax({
+			method : 'POST',
+			url : 'http://localhost:3000',
+			data : {
+				event : 'createConfig',
+				path : currentPath,
+				config : config 
+			},
+			success : function(response){
+				$('#create-repository').modal('hide');
+				$('body').html(response);
+			}
+		});
 	}
 
 });
