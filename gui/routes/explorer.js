@@ -255,6 +255,7 @@ module.exports = function(){
 
 	/* get remote file list with config, if there is no config return false. */
 	var getRemoteFileList = function(config){
+		console.log('in ger remote');
 		if(config){
 			var username = config.username;
 			var password = config.password;

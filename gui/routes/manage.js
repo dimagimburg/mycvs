@@ -5,28 +5,41 @@ module.exports = function(){
 	var path = require('path');
 	var http = require('http');
 	var request = require('request');
+	var explorer = require('./explorer');
+	var Promise = require('promise');
 
 
-	app.get('/', function(req, res) {
+	var currentPath;
+	var config;
+	var remoteFileList;
+
+	app.get('/',function(req,res){
+		if(currentPath){
+			init().then(function(){
+				res.render('pages/manage');
+				res.end();
+			});
+		} else {
+			res.write('here 404');
+			res.end();
+		}
+	});
+
+	app.post('/', function(req, res) {
 		console.log('manage route');
-		if(req.query.path){
-			res.render('pages/manage');
-		}	
+		console.log('data',req.body);
+		currentPath = req.body.currentPath;
+		res.redirect('/');
+		res.end();
+	});
 
-  	app.post('/',function(req,res){
-		console.log('got post request!@$@$!');
-		request({
-			url:'http://localhost:8080/repo/filelist/?reponame=TestRepos',
-			headers : {
-				"Authorization" : "Basic ZGltYWdpbWJ1cmc6ZGltYTE5NDUxOTQz"
-			}
-		}, function(err, resp, body){
-			console.log(body);
+	var init = function(){
+		var promise = new Promise(function(resolve,reject){
+			config = explorer.getConfig(currentPath);
+			resolve();
 		});
-		
-		res.end('ok');
-	});
+		return promise;
+	}
 
-	});
 	return app;
 }();

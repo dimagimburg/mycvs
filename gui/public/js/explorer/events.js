@@ -4,9 +4,9 @@ $(document).ready(function(){
 	var currentPath = $('.path').find('.directory:last').data('path');
 
 	$('.directory').click(function(){ changePath($(this)); });
-	$('.choose-directory').click(function(){ chooseDirectory(currentPath); });
 	$('.create-repository').click(function(){ openCreateRepositoryForm(currentPath); });
 	$('#create-repository-form').submit(function(event){ createRepository(); event.preventDefault();});
+	$('.choose-directory').click(function(){ chooseDirectory(currentPath); });
 
 	var changePath = function(clicked){
 		console.log('change dir to: ' + clicked.data('path'));
@@ -32,14 +32,14 @@ $(document).ready(function(){
 		console.log(currentPath);
 		$.ajax({
 			method : 'POST',
-			url : 'http://localhost:3000',
+			url : 'http://localhost:3000/manage',
 			data : {
 				event : 'chooseDirectory', 
 				currentPath : currentPath
 			},
 			success : function(response){
 				if(!response.error)
-					window.location = 'http://localhost:3000' + response.url + '?path=' + encodeURIComponent(currentPath);
+					window.location = 'http://localhost:3000/manage';
 			}
 		});
 	}
