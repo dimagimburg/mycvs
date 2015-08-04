@@ -13,7 +13,7 @@ module.exports = function(){
 		switch (postParams.event) {
 			case 'addUser':
 				if(explorer.checkIfRepository(postParams.path)){
-					addUser(postParams.username,postParams.password,postParams.path,res);
+					addUser(postParams.username,postParams.password,postParams.admin,postParams.path,res);
 				} else {
 					res.json({error: 1, message : 'Please add user from repository directory'});
 					res.end();
@@ -22,20 +22,20 @@ module.exports = function(){
 		}
 	});
 
-	var addUser = function(username,password,path,res){
+	var addUser = function(username,password,admin,path,res){
 		var config = explorer.getConfig(path);
-		apiAddUser(config,username,password).then(function(result){
+		apiAddUser(config,username,password,admin).then(function(result){
 			res.json({error:0,message:result});
 			res.end();
 		});
 	}
 
-	var apiAddUser = function(config,username,password){
+	var apiAddUser = function(config,username,password,admin){
 		var promise = new Promise(function(resolve,reject){
 			var auth = explorer.userPassToBase64(config.username,config.password);
 			request({
 				method: 'POST',
-				url: 'http://' + config.server + ':' + config.port + '/user/add?username=' + username + '&pass=' + password + '&admin=0',
+				url: 'http://' + config.server + ':' + config.port + '/user/add?username=' + username + '&pass=' + password + '&admin=' + admin,
 				headers : {
 					"Authorization" : "Basic " + auth
 				}

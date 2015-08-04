@@ -6,19 +6,28 @@ $(document).ready(function(){
 
 	$('.add-user-side-bar').click(function(){ $('.add-user').toggle(150); });
 	$('.cancel-add-user-button').click(function(){ $('.add-user').toggle(150); });
-	$('#add-user-form').submit(function(event){ addUser(); event.preventDefault(); });
 
-	var addUser = function(){
+	$('.add-admin-side-bar').click(function(){ $('.add-admin').toggle(150); });
+	$('.cancel-add-admin-button').click(function(){ $('.add-admin').toggle(150); });
+
+	$('#add-user-form').submit(function(event){ addUser(false); event.preventDefault(); });
+	$('#add-admin-form').submit(function(event){ addUser(true); event.preventDefault(); });
+
+	var addUser = function(admin){
 		console.log('user add');
 		console.log($('#add-user-username').val(),$('#add-user-password').val());
+
+		var userOrAdmin = admin ? "admin" : "user"
+
 		$.ajax({
 			method : 'POST',
 			url : 'http://localhost:3000/api/user',
 			data : {
 				event : 'addUser', 
 				path : currentPath,
-				username : $('#add-user-username').val(),
-				password : $('#add-user-password').val()
+				admin : admin,
+				username : $('#add-' + userOrAdmin + '-username').val(),
+				password : $('#add-' + userOrAdmin + '-password').val()
 			},
 			success : function(response){
 				if(response.error){
