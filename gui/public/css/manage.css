@@ -1,0 +1,19 @@
+.content{
+	padding: 10px;
+}
+
+.repository-details{
+	color: #000;
+  	margin: 0 0 20px 0;
+}
+
+.repository-details h1{
+	font-size: 30px;
+  	margin-top: 10px;
+  	color: #4D4B5B;
+}
+
+.remote,.local{
+	color: #000;
+}
+

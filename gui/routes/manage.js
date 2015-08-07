@@ -12,13 +12,24 @@ module.exports = function(){
 	var currentPath;
 	var config;
 	var remoteFileList;
+	var localFileList;
 
 	app.get('/',function(req,res){
 		if(currentPath){
-			init().then(function(){
-				res.render('pages/manage');
-				res.end();
-			});
+			init()
+				.then(function(){
+					explorer.getRemoteFileList(config).then(function(fileList){
+						remoteFileList = trimToArrayFileList(fileList);
+						localFileList = getLocalFilesSync(currentPath,remoteFileList);
+						res.render('pages/manage',{
+							path : currentPath,
+							config : config,
+							remoteFileList : remoteFileList,
+							localFileList : localFileList
+						});
+						res.end();
+					});
+				});
 		} else {
 			res.write('here 404');
 			res.end();
@@ -40,6 +51,24 @@ module.exports = function(){
 		});
 		return promise;
 	}
+
+	var trimToArrayFileList = function(fileList){
+		var temp = fileList.split('\n');
+		temp.splice(-1,1);
+		for(var i = 0; i < temp.length; i++)
+			temp[i] = temp[i].substr(1);
+		return temp;
+	}
+
+	var getLocalFilesSync = function(path,remoteFileList){
+		var allFiles = fs.readdirSync(path);
+		// get the diference between the remote and local to get local file ignoring .mycvs
+		return allFiles.minus(remoteFileList.concat('.mycvs'));
+	}
+
+	Array.prototype.minus = function(a) {
+    	return this.filter(function(i) {return a.indexOf(i) < 0;});
+	};
 
 	return app;
 }();
