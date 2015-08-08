@@ -52,6 +52,11 @@ module.exports = function(){
 					res.end(response);
 				});
 				break;
+			case 'removeMember':
+				removeMember(config,req.body.username).then(function(response){
+					res.end(response);
+				});
+				break;
 			default:
 				currentPath = req.body.currentPath;
 				res.redirect('/');
@@ -116,6 +121,27 @@ module.exports = function(){
 			request({
 				method: 'POST',
 				url: 'http://localhost:8080/repo/user/add?username=' + toAdd + '&reponame=' + config.reponame,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				if(err == null){
+					console.log(body); 
+					resolve(body); 
+				} else {
+					reject(error);
+				}
+			});	
+		});
+		return promise;
+	}
+
+	var removeMember = function(config,toRemove){
+		var promise = new Promise(function(resolve,reject){
+			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
+			request({
+				method: 'DELETE',
+				url: 'http://localhost:8080/repo/user/del?reponame=' + config.reponame + '&username=' + toRemove,
 				headers : {
 					"Authorization" : "Basic " + usernamePasswordBase64
 				}

@@ -9,6 +9,12 @@ $(document).ready(function(){
 		addMemberToRepo(memberToAdd);
 	});
 
+	$('.remove-member').click(function(){
+		var memberToRemove = $('.member-selected').text();
+		console.log('remove',memberToRemove);
+		removeMemberFromRepo(memberToRemove);
+	});
+
 	var getMembers = function(){
 		$.ajax({
 			method : 'POST',
@@ -50,6 +56,29 @@ $(document).ready(function(){
 			}
 		});
 	}
+
+	var removeMemberFromRepo = function(memberToRemove){
+		$.ajax({
+			method : 'POST',
+			url : 'http://localhost:3000/manage',
+			data : {event : 'removeMember', username : memberToRemove},
+			success : function(response){
+				if(response.indexOf('Not Found') > -1){
+					$('.error-message').html('User Not Found');
+					$('.error').fadeIn().delay(1000).fadeOut();
+				} else if (response.indexOf('not supported') > -1) {
+					$('.error-message').html(response);
+					$('.error').fadeIn().delay(1000).fadeOut();
+				} else {
+					$('.success').html(response);
+					$('.success').fadeIn().delay(1000).fadeOut();
+					getMembers();
+				}
+			}
+		});
+	}
+
+
 
 });
 
