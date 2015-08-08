@@ -3,7 +3,8 @@
 <head>
 	<% include ../partials/head %>
 	<link rel="stylesheet" href="public/css/manage.css">
-	<script src="/public/js/explorer/events.js"></script>
+	<script src="/public/js/manage/events.js"></script>
+	<script src="/public/js/manage/scripts.js"></script>
 	<link rel="stylesheet" href="public/css/map-legend.css">
 
 </head>
@@ -19,15 +20,28 @@
 
 	<% include ../partials/side-bar %><div class="body">
 		<div class="top-nav">
-				<button type="button" class="btn btn-success choose-directory">
-					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-					do something
+				<button type="button" class="btn btn-success members-list-button" data-toggle="collapse" data-target="#members-list-section" aria-expanded="false" aria-controls="members-list-section">
+					<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+					Members List
 				</button>
 			<% include ../partials/map-legend %>
 		</div>
 		<div class="content">
 			<div class="page-header repository-details">
 			  	<h1>Repository: <%= config.reponame %> <small>admin: <span style="color: purple;"><%= config.username %></span>, local path: <span style="color: purple;"><%= path %></span></small></h1>
+			</div>
+			<div class="collapse" id="members-list-section">
+			  	<div class="well">
+			  		<ul class="list-group members-list"></ul>
+			  		<div class="member-actions" style="margin-top: 10px;">
+			  			<button type="button" class="btn btn-success add-member">Add</button>
+			  			<div class="col-xs-2">
+					    	<input type="text" class="form-control add-member-username" placeholder="username">
+					  	</div>
+			  			<button type="button" class="btn btn-danger remove-member" style="display:none; float:right;">Remove</button>
+			  		</div>
+			  	</div>
+			  	
 			</div>
 			<div class="well remote">
 				<% for(var i = 0; i < remoteFileList.length; i++){%>

@@ -19,7 +19,8 @@ module.exports = function(){
 			init()
 				.then(function(){
 					explorer.getRemoteFileList(config).then(function(fileList){
-						remoteFileList = trimToArrayFileList(fileList);
+						remoteFileList = trimToArray(fileList);
+						trimStartingSlashes(remoteFileList);
 						localFileList = getLocalFilesSync(currentPath,remoteFileList);
 						res.render('pages/manage',{
 							path : currentPath,
@@ -38,10 +39,25 @@ module.exports = function(){
 
 	app.post('/', function(req, res) {
 		console.log('manage route');
-		console.log('data',req.body);
-		currentPath = req.body.currentPath;
-		res.redirect('/');
-		res.end();
+		switch(req.body.event){
+			case 'repoMembers':
+				getRepoMembers(config).then(function(members){
+					var membersArray = trimToArray(members);
+					res.json({members : membersArray});
+					res.end();
+				});
+				break;
+			case 'addMember':
+				addMember(config,req.body.username).then(function(response){
+					res.end(response);
+				});
+				break;
+			default:
+				currentPath = req.body.currentPath;
+				res.redirect('/');
+				res.end();
+				break;
+		}
 	});
 
 	var init = function(){
@@ -52,12 +68,15 @@ module.exports = function(){
 		return promise;
 	}
 
-	var trimToArrayFileList = function(fileList){
-		var temp = fileList.split('\n');
+	var trimToArray = function(list){
+		var temp = list.split('\n');
 		temp.splice(-1,1);
-		for(var i = 0; i < temp.length; i++)
-			temp[i] = temp[i].substr(1);
 		return temp;
+	}
+
+	var trimStartingSlashes = function(filesArray){
+		for(var i = 0; i < filesArray.length; i++)
+			filesArray[i] = filesArray[i].substr(1);
 	}
 
 	var getLocalFilesSync = function(path,remoteFileList){
@@ -69,6 +88,48 @@ module.exports = function(){
 	Array.prototype.minus = function(a) {
     	return this.filter(function(i) {return a.indexOf(i) < 0;});
 	};
+
+	var getRepoMembers = function(config){
+		var promise = new Promise(function(resolve,reject){
+			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
+			request({
+				method: 'GET',
+				url: 'http://localhost:8080/repo/members?reponame=' + config.reponame,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				if(err == null){
+					console.log(body); 
+					resolve(body); 
+				} else {
+					reject(error);
+				}
+			});	
+		});
+		return promise;
+	}
+
+	var addMember = function(config,toAdd){
+		var promise = new Promise(function(resolve,reject){
+			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
+			request({
+				method: 'POST',
+				url: 'http://localhost:8080/repo/user/add?username=' + toAdd + '&reponame=' + config.reponame,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				if(err == null){
+					console.log(body); 
+					resolve(body); 
+				} else {
+					reject(error);
+				}
+			});	
+		});
+		return promise;
+	}
 
 	return app;
 }();

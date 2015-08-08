@@ -14,6 +14,23 @@
 }
 
 .remote,.local{
-	color: #000;
+	color: #4D4B5B;
 }
 
+#members-list-section{
+	color: #4D4B5B;;
+}
+
+.member-icon{
+	margin-right: 5px;
+}
+
+.member.admin{
+	color: #5CB85C;
+}
+
+.member-selected{
+	color: white;
+	text-decoration: underline;
+	background: #4D4B5B;
+}
