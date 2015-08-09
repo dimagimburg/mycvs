@@ -15,6 +15,11 @@ $(document).ready(function(){
 		removeMemberFromRepo(memberToRemove);
 	});
 
+	$('.checkin').click(function(){
+		var fileToCheckin = $('.local-file-selected').text();
+		checkinFile(fileToCheckin);
+	});
+
 	var getMembers = function(){
 		$.ajax({
 			method : 'POST',
@@ -75,6 +80,17 @@ $(document).ready(function(){
 					$('.remove-member').hide();
 					getMembers();
 				}
+			}
+		});
+	}
+
+	var checkinFile = function(fileName){
+		$.ajax({
+			method : 'POST',
+			url : 'http://localhost:3000/manage',
+			data : { event : 'checkin', filename : fileName},
+			success: function(response){
+				console.log(response);
 			}
 		});
 	}

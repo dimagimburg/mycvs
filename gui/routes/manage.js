@@ -57,6 +57,11 @@ module.exports = function(){
 					res.end(response);
 				});
 				break;
+			case 'checkin':
+				checkin(config,req.body.filename).then(function(response){
+					res.end(response);
+				});
+				break;
 			default:
 				currentPath = req.body.currentPath;
 				res.redirect('/');
@@ -151,6 +156,29 @@ module.exports = function(){
 					resolve(body); 
 				} else {
 					reject(error);
+				}
+			});	
+		});
+		return promise;
+	}
+
+	var checkin = function(config,filename){
+		var promise = new Promise(function(resolve, reject){
+			filename = '/' + filename;
+			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
+			request({
+				method: 'POST',
+				url: 'http://localhost:8080/repo/checkin?reponame=' + config.reponame + '&filename=' + filename,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				if(err == null){
+					console.log(body); 
+					resolve(body); 
+				} else {
+					reject(err);
+					console.log(err);
 				}
 			});	
 		});

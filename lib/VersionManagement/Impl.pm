@@ -210,7 +210,7 @@ sub read_lines_from_file {
 sub save_lines_array_to_file {
     my ($arr, $filename) = @_;
     my @array = @$arr;
-    open(file_handle, ">$filename") or die "Can't save file.\n";
+    open(file_handle, ">$filename") or die "Can't save file. save lines array to file\n";
     foreach my $line(@array) {
         print file_handle $line;
     }
@@ -219,7 +219,8 @@ sub save_lines_array_to_file {
 
 sub save_string_to_new_file {
     my ($str, $filename) = @_;
-    open(file_handle, ">$filename") or die "Can't save file.\n";
+    print "$filename";
+    open(file_handle, ">$filename") or die "Can't save file. save string to new file\n";
     print file_handle $str;
     close(file_handle)
 }
