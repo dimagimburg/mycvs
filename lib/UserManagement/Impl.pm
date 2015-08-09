@@ -413,7 +413,10 @@ sub exist_user_in_group {
         my @group_line = split(':', $line);
         # split group line to check group
         if ($group_line[0] eq $groupname) {
-            return 1 if $group_line[1] =~ /${username}/;
+            my @users = split(',', $group_line[1]);
+            foreach my $user(@users) {
+                return 1 if $user =~ /^\Q${username}\E$/;   
+            }
         }
     }
     return 0;
