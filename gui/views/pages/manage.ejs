@@ -47,7 +47,9 @@
 				<h4>Remote Files List</h4>
 				<ul class="list-group remote-files-list">
 					<% for(var i = 0; i < remoteFileList.length; i++){%>
-						<li class="list-group-item remote-file"><%= remoteFileList[i] %></li>
+						<li class="list-group-item remote-file">
+							<span class="glyphicon glyphicon-file" style="margin-right: 5px;"></span><%= remoteFileList[i].filename %> -- mtime: <%= remoteFileList[i].modified %>
+						</li>
 					<%}%>
 				</ul>
 			</div>
@@ -55,7 +57,9 @@
 				<h4>Local Files List</h4>
 		  		<ul class="list-group local-files-list">
 					<% for(var i = 0; i < localFileList.length; i++){%>
-						<li class="list-group-item local-file"><%= localFileList[i] %></li>
+						<li class="list-group-item local-<% if(localFileList[i].remote){%>remote-<%}%>file">
+							<span class="glyphicon glyphicon-file" style="margin-right: 5px;"></span><%= localFileList[i].filename %> -- mtime: <%= localFileList[i].modified %>
+						</li>
 					<%}%>
 		  		</ul>
 		  		<div class="local-files-actions">

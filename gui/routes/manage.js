@@ -19,7 +19,8 @@ module.exports = function(){
 			init()
 				.then(function(){
 					explorer.getRemoteFileList(config).then(function(fileList){
-						remoteFileList = trimToArray(fileList);
+						remoteFileList = stringListToArray(fileList);
+						setTimeStamps(remoteFileList);
 						trimStartingSlashes(remoteFileList);
 						localFileList = getLocalFilesSync(currentPath,remoteFileList);
 						res.render('pages/manage',{
@@ -32,7 +33,7 @@ module.exports = function(){
 					});
 				});
 		} else {
-			res.write('here 404');
+			res.redirect('http://localhost:3000/');
 			res.end();
 		}
 	});
@@ -42,7 +43,7 @@ module.exports = function(){
 		switch(req.body.event){
 			case 'repoMembers':
 				getRepoMembers(config).then(function(members){
-					var membersArray = trimToArray(members);
+					var membersArray = stringListToArray(members);
 					res.json({members : membersArray});
 					res.end();
 				});
@@ -78,7 +79,19 @@ module.exports = function(){
 		return promise;
 	}
 
-	var trimToArray = function(list){
+	var setTimeStamps = function(filesArray){
+		for(var i = 0; i < filesArray.length; i++){
+			var filename = filesArray[i];
+			var pathToFile = path.join(currentPath,filename);
+			var fileStats = fs.lstatSync(pathToFile);
+			filesArray[i] = {
+				filename : filename,
+				modified : fileStats.mtime
+			};
+		}
+	}
+
+	var stringListToArray = function(list){
 		var temp = list.split('\n');
 		temp.splice(-1,1);
 		return temp;
@@ -86,13 +99,26 @@ module.exports = function(){
 
 	var trimStartingSlashes = function(filesArray){
 		for(var i = 0; i < filesArray.length; i++)
-			filesArray[i] = filesArray[i].substr(1);
+			filesArray[i].filename = filesArray[i].filename.substr(1);
 	}
 
-	var getLocalFilesSync = function(path,remoteFileList){
+	var getLocalFilesSync = function(path,remoteFiles){
 		var allFiles = fs.readdirSync(path);
+		allFiles = allFiles.minus(['.mycvs']);
+		setTimeStamps(allFiles);
 		// get the diference between the remote and local to get local file ignoring .mycvs
-		return allFiles.minus(remoteFileList.concat('.mycvs'));
+		for(var i = 0; i < remoteFiles.length; i++){
+			for(var j = 0; j < allFiles.length; j++){
+				var inRemote = allFiles[j].filename == remoteFiles[i].filename;
+				if(inRemote){
+					allFiles[i].remote = true;
+				}
+			}
+		}
+		console.log(remoteFiles);
+		console.log(allFiles);
+
+		return allFiles;
 	}
 
 	Array.prototype.minus = function(a) {

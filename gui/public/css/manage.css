@@ -43,6 +43,7 @@
 
 .local-file{
 	color: red;
+	cursor: pointer;
 }
 
 .remote-file{
@@ -52,4 +53,8 @@
 .local-files-actions{
 	float: right;
 	margin-top: 10px;
+}
+
+.local-remote-file{
+	color: green;
 }
