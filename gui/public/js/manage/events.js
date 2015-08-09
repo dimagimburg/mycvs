@@ -72,6 +72,7 @@ $(document).ready(function(){
 				} else {
 					$('.success').html(response);
 					$('.success').fadeIn().delay(1000).fadeOut();
+					$('.remove-member').hide();
 					getMembers();
 				}
 			}

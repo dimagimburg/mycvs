@@ -34,3 +34,22 @@
 	text-decoration: underline;
 	background: #4D4B5B;
 }
+
+.local-file-selected{
+	color: white !important;
+	text-decoration: underline;
+	background: #4D4B5B;
+}
+
+.local-file{
+	color: red;
+}
+
+.remote-file{
+	color: green;
+}
+
+.local-files-actions{
+	float: right;
+	margin-top: 10px;
+}
