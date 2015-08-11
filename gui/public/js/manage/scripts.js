@@ -14,7 +14,7 @@ $(document).ready(function(){
 		toggleRemoveMember();
 	});
 
-	$(document).on("click",".local-file",function(e){
+	$(document).on("click",".local-file, .different",function(e){
 		if(!$(e.target).hasClass('local-file-selected')){
 			clearSelectedLocalFiles();
 			selectedLocalFile = $(e.target).text();

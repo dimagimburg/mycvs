@@ -18,7 +18,7 @@
 }
 
 #members-list-section{
-	color: #4D4B5B;;
+	color: #4D4B5B;
 }
 
 .member-icon{
@@ -57,4 +57,9 @@
 
 .local-remote-file{
 	color: green;
+}
+
+.different{
+	color: purple;
+	cursor: pointer;
 }

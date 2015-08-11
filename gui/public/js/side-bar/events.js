@@ -4,6 +4,10 @@ $(document).ready(function(){
 	var currentPath = $('.path').find('.directory:last').data('path');
 	console.log(currentPath);
 
+	$('.backup-db').click(function(){
+		backupDb();
+	});
+
 	$('.add-user-side-bar').click(function(){ $('.add-user').toggle(150); });
 	$('.cancel-add-user-button').click(function(){ $('.add-user').toggle(150); });
 
@@ -39,6 +43,18 @@ $(document).ready(function(){
 					$('#add-user-password').val('');
 					$('.success').fadeIn().delay(1000).fadeOut();
 				}
+			}
+		});
+	}
+
+	var backupDb = function(){
+		$.ajax({
+			method : 'POST',
+			url : 'http://localhost:3000/api/user',
+			data : { event : 'backupDB', path : currentPath },
+			success : function(response){
+				$('.success').html('DataBase backup successfuly created.');
+				$('.success').fadeIn().delay(2000).fadeOut();
 			}
 		});
 	}

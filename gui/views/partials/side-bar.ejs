@@ -15,5 +15,10 @@
 			<span class="glyphicon glyphicon-king" aria-hidden="true"></span>Add admin
 		</div>
 		<% include add-admin-form %>
+		<% if(isRepository){ %>
+		<div class="backup-db nav-link">
+			<span class="glyphicon glyphicon-save" aria-hidden="true"></span>Backup DB
+		</div>
+		<%}%>
 	</div>
 </div>

@@ -3,6 +3,11 @@ $(document).ready(function(){
 		getMembers();
 	});
 
+	$('.remote-file').click(function(){
+		var fileName = $(this).text().trim();
+		getRevisions(fileName);
+	});
+
 	$('.add-member').click(function(){
 		var memberToAdd = $('.add-member-username').val();
 		console.log('add-member clicked',memberToAdd);
@@ -16,8 +21,12 @@ $(document).ready(function(){
 	});
 
 	$('.checkin').click(function(){
-		var fileToCheckin = $('.local-file-selected').text();
+		var fileToCheckin = $('.local-file-selected').text().trim();
 		checkinFile(fileToCheckin);
+	});
+
+	$('.backup').click(function(){
+		backupRepo();
 	});
 
 	var getMembers = function(){
@@ -90,13 +99,34 @@ $(document).ready(function(){
 			url : 'http://localhost:3000/manage',
 			data : { event : 'checkin', filename : fileName},
 			success: function(response){
-				console.log(response);
+				window.location = 'http://localhost:3000/manage';
 			}
 		});
 	}
 
+	var getRevisions = function(fileName){
+		$.ajax({
+			method : 'POST',
+			url : 'http://localhost:3000/manage',
+			data : { event : 'getRevisions', filename : fileName},
+			success : function(response){
+				console.log(response);
+				$('.success').html('<div style="text-align:left;">' + response.replace('\n','<br>') + '</div>');
+				$('.success').fadeIn().delay(2000).fadeOut();
+			}
+		});
+	}
 
+	var backupRepo = function(){
+		$.ajax({
+			method : 'POST',
+			url : 'http://localhost:3000/manage',
+			data : { event : 'backupRepo' },
+			success : function(response){
+				$('.success').html('<div style="text-align:left;">' + response.replace('\n','<br>') + '</div>');
+				$('.success').fadeIn().delay(2000).fadeOut();
+			}
+		});
+	}
 
 });
-
-

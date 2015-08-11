@@ -87,3 +87,7 @@ body{
   	top: 21px;
   	background-color: rgba(0, 255, 0, 0.16);
 }
+
+.content{
+	overflow: hidden;
+}

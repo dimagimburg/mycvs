@@ -7,7 +7,6 @@ module.exports = function(){
 	var Promise = require('promise');
 
   	app.get('/', function(req, res) {
-  		console.log('explorer route');	
   		init(res);
 	});
 
@@ -211,8 +210,7 @@ module.exports = function(){
 	var createConfig = function(params,res){
 		var fileName = path.join(params.path,'.mycvs','config');
 		var config = params.config;
-		var configLine = config.username + ':' + config.password + ':' + config.reponame + ':' + config.server + ':' + config.port;
-		console.log(fileName,configLine);
+		var configLine = config.server + ':' + config.port + ':' + config.reponame + ':' + config.username + ':' + config.password;
 		fs.appendFileSync(fileName,configLine);
 		addRepoToServer(config.reponame,config.username,config.password)
 			.then(function(success,error){
@@ -230,7 +228,6 @@ module.exports = function(){
 					"Authorization" : "Basic " + usernamePasswordBase64
 				}
 			}, function(err, resp, body){
-				console.log(err, resp, body);
 				if(err == null){ 
 					resolve(body); 
 				} else {
@@ -255,15 +252,12 @@ module.exports = function(){
 
 	/* get remote file list with config, if there is no config return false. */
 	var getRemoteFileList = function(config){
-		console.log('in get remote');
 		if(config){
 			var username = config.username;
 			var password = config.password;
 			var reponame = config.reponame;
 			var server = config.server + ':' + config.port;
 			usernamePasswordBase64 = new Buffer(username + ':' + password).toString('base64');
-			//process.chdir('/home/dima/Desktop/another-test');
-			console.log(username,password,reponame,server);
 			var promise = new Promise(function(resolve,reject){
 				request({
 					method: 'GET',
@@ -273,9 +267,9 @@ module.exports = function(){
 					}
 				}, function(err, resp, body){
 					if(err == null){
-						console.log(body);
 						resolve(body); 
 					} else {
+						console.log(err);
 						reject(err);
 					}
 				});		
@@ -294,6 +288,7 @@ module.exports = function(){
 	app.getConfig = getConfig;
 	app.userPassToBase64 = userPassToBase64;
 	app.getRemoteFileList = getRemoteFileList;
+	app.checkIfRepository = checkIfRepository;
 
 	return app;
 }();

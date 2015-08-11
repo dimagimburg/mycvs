@@ -7,6 +7,7 @@ module.exports = function(){
 	var request = require('request');
 	var explorer = require('./explorer');
 	var Promise = require('promise');
+	var MYCVS_REPO_PATH = path.join(getUserHome(),'mycvs','repo');
 
 
 	var currentPath;
@@ -23,11 +24,14 @@ module.exports = function(){
 						setTimeStamps(remoteFileList);
 						trimStartingSlashes(remoteFileList);
 						localFileList = getLocalFilesSync(currentPath,remoteFileList);
+						setDifferent(localFileList);
+						console.log(localFileList);
 						res.render('pages/manage',{
 							path : currentPath,
 							config : config,
 							remoteFileList : remoteFileList,
-							localFileList : localFileList
+							localFileList : localFileList,
+							isRepository : explorer.checkIfRepository(currentPath)
 						});
 						res.end();
 					});
@@ -39,7 +43,6 @@ module.exports = function(){
 	});
 
 	app.post('/', function(req, res) {
-		console.log('manage route');
 		switch(req.body.event){
 			case 'repoMembers':
 				getRepoMembers(config).then(function(members){
@@ -61,6 +64,16 @@ module.exports = function(){
 			case 'checkin':
 				checkin(config,req.body.filename).then(function(response){
 					res.end(response);
+				});
+				break;
+			case 'getRevisions':
+				getRevisions(config,req.body.filename).then(function(response){
+					res.end(response);
+				});
+				break;
+			case 'backupRepo':
+				backupRepo(config).then(function(response){
+					res.end('Repo ' + config.reponame + ' backup created sucssesfuly');
 				});
 				break;
 			default:
@@ -111,15 +124,14 @@ module.exports = function(){
 			for(var j = 0; j < allFiles.length; j++){
 				var inRemote = allFiles[j].filename == remoteFiles[i].filename;
 				if(inRemote){
-					allFiles[i].remote = true;
+					allFiles[j].remote = true;
 				}
 			}
 		}
-		console.log(remoteFiles);
-		console.log(allFiles);
 
 		return allFiles;
 	}
+
 
 	Array.prototype.minus = function(a) {
     	return this.filter(function(i) {return a.indexOf(i) < 0;});
@@ -136,7 +148,6 @@ module.exports = function(){
 				}
 			}, function(err, resp, body){
 				if(err == null){
-					console.log(body); 
 					resolve(body); 
 				} else {
 					reject(error);
@@ -157,7 +168,6 @@ module.exports = function(){
 				}
 			}, function(err, resp, body){
 				if(err == null){
-					console.log(body); 
 					resolve(body); 
 				} else {
 					reject(error);
@@ -178,7 +188,6 @@ module.exports = function(){
 				}
 			}, function(err, resp, body){
 				if(err == null){
-					console.log(body); 
 					resolve(body); 
 				} else {
 					reject(error);
@@ -200,15 +209,72 @@ module.exports = function(){
 				}
 			}, function(err, resp, body){
 				if(err == null){
-					console.log(body); 
 					resolve(body); 
 				} else {
 					reject(err);
-					console.log(err);
 				}
 			});	
 		});
 		return promise;
+	}
+
+	var setDifferent = function(files){
+		for(var i = 0; i < files.length; i++){
+			var filePath = path.join(currentPath,files[i].filename);
+			var fileModified = new Date(fs.lstatSync(filePath).mtime);
+			var fileRemotePath = path.join(MYCVS_REPO_PATH, config.reponame, files[i].filename);
+			if(fs.existsSync(fileRemotePath)){
+				var fileRemoteModified = new Date(fs.lstatSync(fileRemotePath).mtime);
+				files[i].different = fileRemoteModified.getTime() != fileModified.getTime();
+			} else {
+				files[i].different = false;
+			}
+		}
+	}
+
+	var getRevisions = function(config,filename){
+		var promise = new Promise(function(resolve, reject){
+			filename = '/' + filename;
+			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
+			request({
+				method: 'GET',
+				url: 'http://localhost:8080/repo/revisions?reponame=' + config.reponame + '&filename=' + filename,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				if(err == null){
+					resolve(body); 
+				} else {
+					reject(err);
+				}
+			});	
+		});
+		return promise;
+	};
+
+	var backupRepo = function(config){
+		var promise = new Promise(function(resolve, reject){
+			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
+			request({
+				method: 'POST',
+				url: 'http://localhost:8080/backup/backuprepo?reponame=' + config.reponame,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				if(err == null){
+					resolve(body); 
+				} else {
+					reject(err);
+				}
+			});	
+		});
+		return promise;
+	}
+
+	function getUserHome() {
+	  	return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
 	}
 
 	return app;
