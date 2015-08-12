@@ -45,19 +45,7 @@ $(document).ready(function(){
 	}
 
 	var openCreateRepositoryForm = function(currentPath){
-		$.ajax({
-			method : 'POST',
-			url : 'http://localhost:3000',
-			data : {
-				event : 'createRepository', 
-				currentPath : currentPath 
-			},
-			success : function(response){
-				if(!parseInt(response.error)){
-					$('#create-repository').modal();
-				}
-			}
-		});
+		$('#create-repository').modal();
 	}
 
 	var createRepository = function(){

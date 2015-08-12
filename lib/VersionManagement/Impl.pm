@@ -219,6 +219,7 @@ sub save_lines_array_to_file {
 
 sub save_string_to_new_file {
     my ($str, $filename) = @_;
+    $str = "" if !defined($str);
     RepoManagement::Init::check_and_create_dir(dirname($filename));
     open(file_handle, ">$filename") or die "Can't save file. save string to new file\n";
     print file_handle $str;

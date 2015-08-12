@@ -21,11 +21,11 @@ module.exports = function(){
 				chooseDirectory(postParams.currentPath,res);
 				break;
 			case 'createRepository':
-				createRepository(postParams.currentPath);
 				res.json({'error':'0'});
 				res.end();
 				break;
 			case 'createConfig':
+				createRepository(postParams.path);
 				createConfig(postParams,res);
 				break;
 		}
