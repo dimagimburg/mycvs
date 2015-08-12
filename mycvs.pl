@@ -22,14 +22,14 @@ use HTTP::HttpServer;
 given(shift(@ARGV)) {
     when ('diff') {
         my $revision;
-        GetOptions('-r=i' => \$revision) or die usage();
+        GetOptions('-r=i' => \$revision) or die "$!\n";
         diff(shift(@ARGV), $revision);
     }
     when ('localdiff') {diff_local(shift(@ARGV),shift(@ARGV))}
     when ('checkin') { checkin(shift(@ARGV)); }
     when ('checkout') {
         my $revision;
-        GetOptions('-r=i' => \$revision) or die usage();
+        GetOptions('-r=i' => \$revision) or die "$!\n";
         checkout(shift(@ARGV), $revision);
     }
     when ('user') { user(shift(@ARGV),shift(@ARGV),shift(@ARGV),shift(@ARGV)); }

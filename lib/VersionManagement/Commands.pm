@@ -26,10 +26,10 @@ use RepoManagement::Configuration qw($MYCVS_REMOTE_SUFFIX);
 sub checkin_file {
     my ($file_path) = @_;
     die "You must provide at least filename to this command.\n" if ! defined $file_path;
-    die "Local file not found.\n" if ! -f $file_path;
+    die "Local file not found or not a regular file.\n" if ! -f $file_path;
     
     my ($current_user, $last_user) = get_remote_last_user(realpath($file_path));
-    if (defined($last_user) && ($last_user ne $current_user)) {
+    if (defined($last_user) && ($last_user ne 'None') && ($last_user ne $current_user)) {
         print "Last checkin not made by you.\n";
         print "Last user that made checkin is: '$last_user'.\n";
         print "If not sure, you can view diff before checkin.\n";
@@ -61,6 +61,8 @@ sub checkout_file {
         if ($answer ne "n") {
             delete_file($file_path);
             move ($file_path.'.'.$MYCVS_REMOTE_SUFFIX, $file_path);
+        } else {
+            print "Saved as '$file_path.$MYCVS_REMOTE_SUFFIX'\n";
         }
     } else {
         move ($file_path.'.'.$MYCVS_REMOTE_SUFFIX, $file_path);
@@ -69,7 +71,7 @@ sub checkout_file {
 
 
 
-# Prints diff in prety form at given revision
+# Prints diff in pretty form at given revision
 # If revision not defined users last revision.
 sub print_revision_diff  {
     my ($file_path, $revision) = @_;
@@ -123,6 +125,10 @@ sub print_local_files_diff {
 # Revision: <>, TimeStamp: <>
 sub print_revisions {
     my ($file_path) = @_;
+    if (!defined($file_path)) {
+        die "You need to specify filename.\n";
+    }
+    
     if (! -f $file_path) {
         print "File not found locally.\nChecking remote repository...\n\n";
     }
@@ -132,6 +138,7 @@ sub print_revisions {
 
     
     if (@revisions) {
+        print "Sever timestamps are in UTC timezone.\n";
         print "Revisions for the file: '$file_path':\n";
         print "==========================================\n";
         foreach(@revisions) {
@@ -165,7 +172,7 @@ sub print_file_list {
             print "R  - Filename: '$file'\n";
         }
     }
-    foreach(keys %local_files) {
+    foreach(sort(keys %local_files)) {
         print "L  - Filename: '$_'\n" if ! -d $_;
     }
     

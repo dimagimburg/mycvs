@@ -100,6 +100,8 @@ sub check_config {
     my @admin_list = list_admin_users();
     if (! @admin_list) {
         my $answer = 0;
+        print "There are no admin users configured.\n";
+        print "You'll be asked to configure first admin now.\n";
         while($answer != 1){
             print "Please enter admin user name: ";
             $admin = <STDIN>; chomp $admin;

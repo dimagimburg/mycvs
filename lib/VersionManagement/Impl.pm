@@ -66,8 +66,7 @@ sub mark_last_user {
         return;
     }
     my $marker_file = get_last_user_marker($filename);
-    print $marker_file."\n";
-    print $filename."\n";
+    
     if (defined($marker_file)) {
         my $dir = dirname($filename);
         delete_file("$dir/$marker_file");
@@ -210,6 +209,7 @@ sub read_lines_from_file {
 sub save_lines_array_to_file {
     my ($arr, $filename) = @_;
     my @array = @$arr;
+    RepoManagement::Init::check_and_create_dir(dirname($filename));
     open(file_handle, ">$filename") or die "Can't save file. save lines array to file\n";
     foreach my $line(@array) {
         print file_handle $line;
@@ -219,7 +219,7 @@ sub save_lines_array_to_file {
 
 sub save_string_to_new_file {
     my ($str, $filename) = @_;
-    print "$filename";
+    RepoManagement::Init::check_and_create_dir(dirname($filename));
     open(file_handle, ">$filename") or die "Can't save file. save string to new file\n";
     print file_handle $str;
     close(file_handle)
@@ -387,11 +387,12 @@ sub get_dir_contents_recur {
     }
     
     find($wanted, $dirname);
-    return @$files;
+    return sort(@$files);
 }
 
 sub _wanted {
    return if ! -e;
+   return if -d;
    my ($files, $dir) = @_;
 
    $File::Find::name =~ s/^${dir}//;

@@ -252,6 +252,8 @@ sub post_remote_checkin {
     
     if ($timestamp eq $remote_timestamp) {
         return "TimeStamp not changed. Nothing to checkin.\n";
+    } elsif ($timestamp lt $remote_timestamp) {
+        return "Your file is older than server. Please checkout first.\n";
     }
     
     $local_file_path = $file_path;
