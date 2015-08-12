@@ -61,7 +61,7 @@
 				<h4>Local Files List</h4>
 		  		<ul class="list-group local-files-list">
 					<% for(var i = 0; i < localFileList.length; i++){%>
-						<li class="list-group-item local-<% if(localFileList[i].remote){%>remote-<%}%>file <% if(localFileList[i].different){ %>different<%}%>">
+						<li class="list-group-item local-file <% if(localFileList[i].remote){%>local-remote<%}%>">
 							<span class="glyphicon glyphicon-file" style="margin-right: 5px;"></span><%= localFileList[i].filename %>
 						</li>
 					<%}%>

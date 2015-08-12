@@ -24,7 +24,6 @@ module.exports = function(){
 						setTimeStamps(remoteFileList);
 						trimStartingSlashes(remoteFileList);
 						localFileList = getLocalFilesSync(currentPath,remoteFileList);
-						setDifferent(localFileList);
 						console.log(localFileList);
 						res.render('pages/manage',{
 							path : currentPath,
@@ -199,14 +198,22 @@ module.exports = function(){
 
 	var checkin = function(config,filename){
 		var promise = new Promise(function(resolve, reject){
+			var filePath = path.join(currentPath,filename);
+			console.log('------------');
+			console.log(filePath);
+			var fileContent = fs.readFileSync(filePath,{encoding : 'utf8'});
+			console.log('------------');
+			console.log(fileContent);
 			filename = '/' + filename;
 			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
 			request({
 				method: 'POST',
 				url: 'http://localhost:8080/repo/checkin?reponame=' + config.reponame + '&filename=' + filename,
 				headers : {
-					"Authorization" : "Basic " + usernamePasswordBase64
-				}
+					"Authorization" : "Basic " + usernamePasswordBase64,
+					"Content-Length" : fileContent.length
+				},
+				body : fileContent
 			}, function(err, resp, body){
 				if(err == null){
 					resolve(body); 

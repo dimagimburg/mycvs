@@ -99,7 +99,12 @@ $(document).ready(function(){
 			url : 'http://localhost:3000/manage',
 			data : { event : 'checkin', filename : fileName},
 			success: function(response){
-				window.location = 'http://localhost:3000/manage';
+				if(response){
+					$('.error-message').html(response);
+					$('.error').fadeIn().delay(1000).fadeOut();
+				} else {
+					window.location = 'http://localhost:3000/manage';
+				}
 			}
 		});
 	}
@@ -111,7 +116,7 @@ $(document).ready(function(){
 			data : { event : 'getRevisions', filename : fileName},
 			success : function(response){
 				console.log(response);
-				$('.success').html('<div style="text-align:left;">' + response.replace('\n','<br>') + '</div>');
+				$('.success').html('<div style="text-align:left;">' + response.replace(/\n/g,'<br>') + '</div>');
 				$('.success').fadeIn().delay(2000).fadeOut();
 			}
 		});
