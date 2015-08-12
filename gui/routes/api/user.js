@@ -73,6 +73,7 @@ module.exports = function(){
 				if(err == null){
 					resolve(body); 
 				} else {
+					console.log(err);
 					reject(err);
 				}
 			});		

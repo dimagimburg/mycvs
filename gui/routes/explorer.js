@@ -5,6 +5,8 @@ module.exports = function(){
   	var path = require('path');
 	var request = require('request');
 	var Promise = require('promise');
+	var userApi = require('./api/user');
+
 
   	app.get('/', function(req, res) {
   		init(res);
@@ -214,8 +216,30 @@ module.exports = function(){
 		fs.appendFileSync(fileName,configLine);
 		addRepoToServer(config.reponame,config.username,config.password)
 			.then(function(success,error){
-				changePath(params.path,res);	
+				addUserToRepo(config.reponame,config.username,config.password).then(function(){
+					changePath(params.path,res);	
+				});
 			});
+	}
+
+	var addUserToRepo = function(reponame,username,password){
+		var usernamePasswordBase64 = new Buffer(username + ':' + password).toString('base64');
+		var promise = new Promise(function(resolve,reject){
+			request({
+				method: 'POST',
+				url: 'http://localhost:8080/repo/user/add?username=' + username + '&reponame=' + reponame,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				if(err == null){ 
+					resolve(); 
+				} else {
+					reject(error);
+				}
+			});		
+		});
+		return promise;
 	}
 
 	var addRepoToServer = function(reponame,username,password){
