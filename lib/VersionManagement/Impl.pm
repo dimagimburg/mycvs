@@ -398,6 +398,7 @@ sub _wanted {
 
    $File::Find::name =~ s/^${dir}//;
    return if $File::Find::name eq "";
+   return if $File::Find::name =~ /\.remote_copy$/;
    return if $File::Find::name =~ /\.lock\./;
    return if $File::Find::name =~ /\.last_checkin\./;
 
