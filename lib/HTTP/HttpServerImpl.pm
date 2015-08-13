@@ -836,7 +836,7 @@ sub backup_post_commands {
             
         }
         when("restoredb") {
-            print "Processing 'backuprepo' Request\n";
+            print "Processing 'restoredb' Request\n";
             if (!defined($backupname)) {
                 return (bad_request_message(), "");
             }
@@ -850,7 +850,7 @@ sub backup_post_commands {
             
         }
         when("backupdb") {
-            print "Processing 'backuprepo' Request\n";
+            print "Processing 'backupdb' Request\n";
             if (!db_backup_do()) {
                 return (backup_restore_failure_message('DataBase backup'), "");
             }
