@@ -50,10 +50,16 @@ sub checkin_file {
 # If revision not defined uses last revision
 sub checkout_file {
     my ($file_path, $revision) = @_;
+    my $srv_file;
     die "You must provide at least filename to this command.\n" if ! defined $file_path;
-    print "Local file not found. Trying to get from remote...\n" if ! -f $file_path;
+    if (! -f $file_path) {
+        print "Local file not found. Trying to get from remote...\n";
+        $srv_file = "/".$file_path;
+    } else {
+        $srv_file = realpath($file_path);
+    }
     
-    get_remote_checkout(realpath($file_path), $revision);
+    get_remote_checkout($srv_file, $revision);
     
     if (-f $file_path) {
         print "Do you want to overwrite existing file?[y/n] (y - default) ";

@@ -48,17 +48,7 @@ sub add_user {
     print $reply;
     
 }
-# Simply prints global user list
-sub print_users {
-    my @userlist = list_users();
-    if (!@userlist) {
-        die "User's DB is empty\n";
-    }
-    
-    foreach my $line(@userlist) {
-        print "$line\n";
-    }
-}
+
 # Interactively add user to group
 sub add_user_to_group {
     my ($user, $group) = @ARGV;
@@ -78,10 +68,7 @@ sub rem_user_from_group {
     my $reply = delete_remote_repo_perm($group, $user);
     print $reply;
 }
-# Simply prints groups that user belons to.
-sub list_user_groups {
-    my ($user) = @_;
-}
+
 # Simply prints group members.
 sub list_remote_group_members {
     my ($group) = @_;

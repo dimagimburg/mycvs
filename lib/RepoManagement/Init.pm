@@ -48,7 +48,7 @@ sub init_local {
 sub save_client_config {
     my ($host, $port, $reponame, $user, $pass, $dir) = @_;
     check_and_create_dir("$dir/.mycvs");
-    save_config("$host:$port:$reponame:$user:$pass", "$dir/.mycvs/$MYCVS_CONFIG_NAME")
+    save_string_to_new_file("$host:$port:$reponame:$user:$pass\n", "$dir/.mycvs/$MYCVS_CONFIG_NAME")
 }
 
 # writes the config string to the file
