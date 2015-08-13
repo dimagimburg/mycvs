@@ -183,11 +183,11 @@ sub get_remote_checkout {
     my ($file_path, $revision) = @_;
     my ($vars, $response, $temp_file_path, $local_file_path, @file_lines, %headers);
     
-    if (! check_http_prerequisites($file_path)) {
+    if (! check_http_prerequisites(getcwd().'/.')) {
         return;
     }
-    my %options = parse_config_line($file_path);
-    my $reporoot = get_repo_root($file_path);
+    my %options = parse_config_line(getcwd().'/.');
+    my $reporoot = get_repo_root(getcwd().'/.');
     my $timestamp;
     
     $local_file_path = $file_path;
@@ -200,6 +200,10 @@ sub get_remote_checkout {
     }
     ($response, %headers) = send_http_request('GET',$get_commands{checkout}, $vars);
     return if ! defined($response);
+    
+    if ($temp_file_path !~ /^${reporoot}/) {
+        $temp_file_path = $reporoot.$temp_file_path;
+    }
     
     save_string_to_new_file($response, $temp_file_path);
     set_file_time($temp_file_path, $headers{'time-stamp'});

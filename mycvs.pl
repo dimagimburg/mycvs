@@ -63,13 +63,6 @@ sub user {
     given(shift) {
         when ('add') {UserManagement::Commands::add_user(shift,shift);}
         when ('rem') {UserManagement::Commands::rem_user(shift);}
-        when ('list') {UserManagement::Commands::list_users();}
-        when ('repo') {
-            given(shift) {
-                when ('list') {UserManagement::Commands::list_user_groups(shift);}
-                default {user_usage();}
-            }
-        }
         default {user_usage();}
     }
 }
@@ -149,7 +142,6 @@ sub user_usage {
     print "\nUSAGE:\n";
     print "$exe user add <user>       - Add user.\n";
     print "$exe user rem <user>       - Remove user.\n";
-    print "$exe user repo list <user> - List user's groups.\n";
 }
 
 sub repo_usage {
