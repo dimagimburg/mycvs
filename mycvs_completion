@@ -1,0 +1,40 @@
+_mycvs() {
+    local cur prev mainopts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    
+    mainopts="filelist checkin checkout revisions diff localdiff
+          clientconfig server user repo backup restore"
+
+    case ${COMP_CWORD} in
+        1) COMPREPLY=( $(compgen -W "${mainopts}" -- ${cur}) )
+        ;;
+        2) case $prev in 
+              server) COMPREPLY=( $(compgen -W "start" -- ${cur}) )
+              ;;
+              user) COMPREPLY=( $(compgen -W "add rem repo" -- ${cur}) )
+              ;;
+              repo) COMPREPLY=( $(compgen -W "add rem list members user" -- ${cur}) )
+              ;;
+              backup) COMPREPLY=( $(compgen -W "repo db listrepo listdb" -- ${cur}) )
+              ;;
+              restore) COMPREPLY=( $(compgen -W "repo db" -- ${cur}) )
+              ;;
+              *) compopt -o default; COMPREPLY=() 
+              ;;
+           esac
+           ;;
+        3) case $prev in 
+              user) COMPREPLY=( $(compgen -W "add rem" -- ${cur}) )
+              ;;
+              *) COMPREPLY=()
+              ;;
+           esac
+           ;;
+        *) COMPREPLY=()
+           ;;
+    esac
+
+}
+complete -F _mycvs mycvs.pl

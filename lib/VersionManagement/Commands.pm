@@ -144,7 +144,6 @@ sub print_revisions {
 
     
     if (@revisions) {
-        print "Sever timestamps are in UTC timezone.\n";
         print "Revisions for the file: '$file_path':\n";
         print "==========================================\n";
         foreach(@revisions) {
