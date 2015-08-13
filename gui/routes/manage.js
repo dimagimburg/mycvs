@@ -75,6 +75,16 @@ module.exports = function(){
 					res.end('Repo ' + config.reponame + ' backup created sucssesfuly');
 				});
 				break;
+			case 'getTimeStamp':
+				getTimeStamp(config,req.body.filename).then(function(response){
+					res.end(response);
+				});
+				break;
+			case 'checkout':
+				checkout(config,req.body.filename).then(function(response){
+					end.res(response);
+				});
+				break;
 			default:
 				currentPath = req.body.currentPath;
 				res.redirect('/');
@@ -87,6 +97,51 @@ module.exports = function(){
 		var promise = new Promise(function(resolve,reject){
 			config = explorer.getConfig(currentPath);
 			resolve();
+		});
+		return promise;
+	}
+
+	var checkout = function(config,filename){
+		filename = '/' + filename;
+		var promise = new Promise(function(resolve,reject){
+			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
+			request({
+				method: 'GET',
+				url: 'http://localhost:8080/repo/checkout?reponame=' + config.reponame + '&filename=' + filename,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				if(err == null){
+					resolve(body); 
+				} else {
+					console.log(error);
+					reject(error);
+				}
+			});	
+		});
+		return promise;
+	}
+
+	var getTimeStamp = function(config,filename){
+		filename = '/' + filename;
+		var promise = new Promise(function(resolve,reject){
+			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
+			request({
+				method: 'GET',
+				url: 'http://localhost:8080/repo/timestamp?reponame=' + config.reponame + '&filename=' + filename,
+				headers : {
+					"Authorization" : "Basic " + usernamePasswordBase64
+				}
+			}, function(err, resp, body){
+				if(err == null){
+					var timestamp = new Date(fs.lstatSync(path.join(currentPath,filename)).mtime);
+					console.log(timestamp.getTime());
+					resolve(body); 
+				} else {
+					reject(error);
+				}
+			});	
 		});
 		return promise;
 	}
@@ -199,11 +254,7 @@ module.exports = function(){
 	var checkin = function(config,filename){
 		var promise = new Promise(function(resolve, reject){
 			var filePath = path.join(currentPath,filename);
-			console.log('------------');
-			console.log(filePath);
 			var fileContent = fs.readFileSync(filePath,{encoding : 'utf8'});
-			console.log('------------');
-			console.log(fileContent);
 			filename = '/' + filename;
 			var usernamePasswordBase64 = explorer.userPassToBase64(config.username,config.password);
 			request({

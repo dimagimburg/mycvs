@@ -3,6 +3,22 @@ $(document).ready(function(){
 	var selectedMemberUsername;
 	var selectedLocalFile;
 
+	$('.remote-file').click(function(){
+		var fileName = $(this).text().trim();
+		var remotes = $('.remote-file');
+		console.log(remotes);
+		var selectedAlready = $(this).hasClass('remote-file-selected');
+		for(var i = 0; i < remotes.length; i++){
+			$(remotes[i]).removeClass('remote-file-selected');
+		}
+		if(!selectedAlready){
+			$('.remote-files-actions').show(150);
+			$(this).addClass('remote-file-selected');
+		} else {
+			$('.remote-files-actions').hide(150);
+		}
+	});
+
 	$(document).on("click",".member",function(e){
 		if(!$(e.target).hasClass('member-selected')){
 			clearSelectedMembers();

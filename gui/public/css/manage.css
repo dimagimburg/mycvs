@@ -67,3 +67,8 @@
 .local-remote{
 	color: black;
 }
+
+.remote-file-selected{
+	background: #4D4B5B;
+	color: white !important;
+}

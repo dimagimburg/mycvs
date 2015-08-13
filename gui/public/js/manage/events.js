@@ -3,8 +3,13 @@ $(document).ready(function(){
 		getMembers();
 	});
 
-	$('.remote-file').click(function(){
-		var fileName = $(this).text().trim();
+	$('.checkout').click(function(){
+		var fileName = $('.remote-file-selected').text().trim();
+		checkout(fileName);
+	});
+
+	$('.get-revisions').click(function(){
+		var fileName = $('.remote-file-selected').text().trim();
 		getRevisions(fileName);
 	});
 
@@ -27,6 +32,20 @@ $(document).ready(function(){
 
 	$('.backup').click(function(){
 		backupRepo();
+	});
+
+	$('.local-remote').click(function(){
+		var filename = $(this).text().trim();
+		console.log('get time stamp of - ' + filename);
+		$.ajax({
+			method : 'POST',
+			url : 'http://localhost:3000/manage',
+			data : { event : 'getTimeStamp' , filename : filename} ,
+			success : function(response){
+				var timestamp = response.replace( /^\D+/g, '');
+				console.log(timestamp);
+			}
+		});
 	});
 
 	var getMembers = function(){
@@ -130,6 +149,17 @@ $(document).ready(function(){
 			success : function(response){
 				$('.success').html('<div style="text-align:left;">' + response.replace('\n','<br>') + '</div>');
 				$('.success').fadeIn().delay(2000).fadeOut();
+			}
+		});
+	}
+
+	var checkout = function(filename){
+		$.ajax({
+			method : 'POST',
+			url : 'http://localhost:3000/manage',
+			data : { event : 'checkout' , filename : filename},
+			success : function(response){
+				console.log(response);
 			}
 		});
 	}
